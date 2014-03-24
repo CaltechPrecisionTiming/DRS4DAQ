@@ -224,6 +224,8 @@ main (int argc, char **argv)
 
   float Channel1Voltages[1024];
   float Channel2Voltages[1024];
+  float Channel3Voltages[1024];
+  float Channel4Voltages[1024];
 
   // Create a ROOT Tree
   TTree *tree =
@@ -235,6 +237,8 @@ main (int argc, char **argv)
   tree->Branch ("RMS", &rms, "ch1:ch2:ch3:ch4");
   tree->Branch ("Channel1Voltages", &Channel1Voltages, "Channel1Voltages[1024]");
   tree->Branch ("Channel2Voltages", &Channel2Voltages, "Channel2Voltages[1024]");
+  tree->Branch ("Channel3Voltages", &Channel3Voltages, "Channel3Voltages[1024]");
+  tree->Branch ("Channel4Voltages", &Channel4Voltages, "Channel4Voltages[1024]");
 
   char EventHeader[5];
   int SerialNumber;
@@ -358,15 +362,15 @@ main (int argc, char **argv)
 		    }
 		  if (n == 3)
 		    {
-		      CH1event3->Fill (i, ChannelData[i]);
+		      CH1event3->Fill (i, ChannelDataVoltage[i]);
 		    }
 		  if (n == 4)
 		    {
-		      CH1event4->Fill (i, ChannelData[i]);
+		      CH1event4->Fill (i, ChannelDataVoltage[i]);
 		    }
 		  if (n == 5)
 		    {
-		      CH1event5->Fill (i, ChannelData[i]);
+		      CH1event5->Fill (i, ChannelDataVoltage[i]);
 		    }
 		}
 
@@ -398,15 +402,15 @@ main (int argc, char **argv)
 		    }
 		  if (n == 3)
 		    {
-		      CH2event3->Fill (i, ChannelData[i]);
+		      CH2event3->Fill (i, ChannelDataVoltage[i]);
 		    }
 		  if (n == 4)
 		    {
-		      CH2event4->Fill (i, ChannelData[i]);
+		      CH2event4->Fill (i, ChannelDataVoltage[i]);
 		    }
 		  if (n == 5)
 		    {
-		      CH2event5->Fill (i, ChannelData[i]);
+		      CH2event5->Fill (i, ChannelDataVoltage[i]);
 		    }
 		}
 
@@ -430,23 +434,23 @@ main (int argc, char **argv)
 		{
 		  if (n == 1)
 		    {
-		      CH3event1->Fill (i, ChannelData[i]);
+		      CH3event1->Fill (i, ChannelDataVoltage[i]);
 		    }
 		  if (n == 2)
 		    {
-		      CH3event2->Fill (i, ChannelData[i]);
+		      CH3event2->Fill (i, ChannelDataVoltage[i]);
 		    }
 		  if (n == 3)
 		    {
-		      CH3event3->Fill (i, ChannelData[i]);
+		      CH3event3->Fill (i, ChannelDataVoltage[i]);
 		    }
 		  if (n == 4)
 		    {
-		      CH3event4->Fill (i, ChannelData[i]);
+		      CH3event4->Fill (i, ChannelDataVoltage[i]);
 		    }
 		  if (n == 5)
 		    {
-		      CH3event5->Fill (i, ChannelData[i]);
+		      CH3event5->Fill (i, ChannelDataVoltage[i]);
 		    }
 		}
 
@@ -456,7 +460,16 @@ main (int argc, char **argv)
 	      peaktime.ch3 = tmin;
 	      mean.ch3 = vmean;
 	      rms.ch3 = vRMS;
+
+	      for (int i = 0; i < 1024; i++)
+		{
+		  Channel3Voltages[i] = ChannelDataVoltage[i];
+		  // std::cout<<"KKK "<<Channel1Voltages[i]<<" "<<ChannelDataVoltage[i]<<std::endl;
+		}
+
 	    }			// end of channel 3
+
+
 
 	  else if (strcmp (ChannelHeader, "C004") == 0)
 	    {
@@ -464,23 +477,23 @@ main (int argc, char **argv)
 		{
 		  if (n == 1)
 		    {
-		      CH4event1->Fill (i, ChannelData[i]);
+		      CH4event1->Fill (i, ChannelDataVoltage[i]);
 		    }
 		  if (n == 2)
 		    {
-		      CH4event2->Fill (i, ChannelData[i]);
+		      CH4event2->Fill (i, ChannelDataVoltage[i]);
 		    }
 		  if (n == 3)
 		    {
-		      CH4event3->Fill (i, ChannelData[i]);
+		      CH4event3->Fill (i, ChannelDataVoltage[i]);
 		    }
 		  if (n == 4)
 		    {
-		      CH4event4->Fill (i, ChannelData[i]);
+		      CH4event4->Fill (i, ChannelDataVoltage[i]);
 		    }
 		  if (n == 5)
 		    {
-		      CH4event5->Fill (i, ChannelData[i]);
+		      CH4event5->Fill (i, ChannelDataVoltage[i]);
 		    }
 		}
 
@@ -491,6 +504,11 @@ main (int argc, char **argv)
 	      mean.ch4 = vmean;
 	      rms.ch4 = vRMS;
 
+	      for (int i = 0; i < 1024; i++)
+		{
+		  Channel4Voltages[i] = ChannelDataVoltage[i];
+		  // std::cout<<"KKK "<<Channel1Voltages[i]<<" "<<ChannelDataVoltage[i]<<std::endl;
+		}
 	    }			// end of channel 4
 	}			// end of channel loop
 

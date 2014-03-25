@@ -206,7 +206,7 @@ main (int argc, char **argv)
 
   struct Event_t
   {
-    Int_t event_number;
+    Int_t event;
   };
 
 
@@ -220,25 +220,36 @@ main (int argc, char **argv)
   SoverN_t sovern;
   Dt_t dt;
   Flag_t flag;
-  Event_t nevent;
+  Event_t event;
 
-  float Channel1Voltages[1024];
-  float Channel2Voltages[1024];
-  float Channel3Voltages[1024];
-  float Channel4Voltages[1024];
+  float c1[1024];
+  float c2[1024];
+  float c3[1024];
+  float c4[1024];
+
+  int t1[1024];
+  int t2[1024];
+  int t3[1024];
+  int t4[1024];
 
   // Create a ROOT Tree
   TTree *tree =
     new TTree ("T", "An example of ROOT tree with a few branches");
-  tree->Branch ("nevent", &nevent, "event_number/I");
+  tree->Branch ("event", &event, "event/I");
   tree->Branch ("peaktime", &peaktime, "ch1:ch2:ch3:ch4");
   tree->Branch ("amplitude", &amplitude, "ch1:ch2:ch3:ch4");
   tree->Branch ("mean", &mean, "ch1:ch2:ch3:ch4");
   tree->Branch ("RMS", &rms, "ch1:ch2:ch3:ch4");
-  tree->Branch ("Channel1Voltages", &Channel1Voltages, "Channel1Voltages[1024]");
-  tree->Branch ("Channel2Voltages", &Channel2Voltages, "Channel2Voltages[1024]");
-  tree->Branch ("Channel3Voltages", &Channel3Voltages, "Channel3Voltages[1024]");
-  tree->Branch ("Channel4Voltages", &Channel4Voltages, "Channel4Voltages[1024]");
+
+  tree->Branch ("c1", c1, "c1[1024]/F");
+  tree->Branch ("c2", c2, "c2[1024]/F");
+  tree->Branch ("c3", c3, "c3[1024]/F");
+  tree->Branch ("c4", c4, "c4[1024]/F");
+
+  tree->Branch ("t1", t1, "t1[1024]/I");
+  tree->Branch ("t2", t2, "t2[1024]/I");
+  tree->Branch ("t3", t3, "t3[1024]/I");
+  tree->Branch ("t4", t4, "t4[1024]/I");
 
   char EventHeader[5];
   int SerialNumber;
@@ -280,7 +291,7 @@ main (int argc, char **argv)
 
       ++n;			//  n + 1
 
-      nevent.event_number = n;
+      event.event = n;
 
       // Read serial number
       file.read ((char *) &SerialNumber, 4);
@@ -383,8 +394,9 @@ main (int argc, char **argv)
 
 	      for (int i = 0; i < 1024; i++)
 		{
-		  Channel1Voltages[i] = ChannelDataVoltage[i];
-		  // std::cout<<"KKK "<<Channel1Voltages[i]<<" "<<ChannelDataVoltage[i]<<std::endl;
+		  c1[i] = ChannelDataVoltage[i];
+		  t1[i] = i;
+		  // std::cout<<"KKK "<<c1[i]<<" "<<t1[i]<<" "<<event.event<<std::endl;
 		}
 	    }			// end of channel 1
 
@@ -423,8 +435,9 @@ main (int argc, char **argv)
 
 	      for (int i = 0; i < 1024; i++)
 		{
-		  Channel2Voltages[i] = ChannelDataVoltage[i];
-		  // std::cout<<"KKK "<<Channel1Voltages[i]<<" "<<ChannelDataVoltage[i]<<std::endl;
+		  c2[i] = ChannelDataVoltage[i];
+		  t2[i] = i;
+		  // std::cout<<"KKK "<<c1[i]<<" "<<ChannelDataVoltage[i]<<std::endl;
 		}
 	    }			// end of channel 2
 
@@ -463,8 +476,9 @@ main (int argc, char **argv)
 
 	      for (int i = 0; i < 1024; i++)
 		{
-		  Channel3Voltages[i] = ChannelDataVoltage[i];
-		  // std::cout<<"KKK "<<Channel1Voltages[i]<<" "<<ChannelDataVoltage[i]<<std::endl;
+		  c3[i] = ChannelDataVoltage[i];
+		  t3[i] = i;
+		  // std::cout<<"KKK "<<c1[i]<<" "<<ChannelDataVoltage[i]<<std::endl;
 		}
 
 	    }			// end of channel 3
@@ -506,8 +520,9 @@ main (int argc, char **argv)
 
 	      for (int i = 0; i < 1024; i++)
 		{
-		  Channel4Voltages[i] = ChannelDataVoltage[i];
-		  // std::cout<<"KKK "<<Channel1Voltages[i]<<" "<<ChannelDataVoltage[i]<<std::endl;
+		  c4[i] = ChannelDataVoltage[i];
+		  t4[i] = i;		 
+		  // std::cout<<"KKK "<<c1[i]<<" "<<ChannelDataVoltage[i]<<std::endl;
 		}
 	    }			// end of channel 4
 	}			// end of channel loop

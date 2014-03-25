@@ -1,0 +1,32 @@
+input=$1
+output=$2
+
+if [ -z $1 ]; then
+   echo "Please specify the source file you want to compile"
+   exit
+fi
+
+if [ -z $2 ]; then
+   output=a.out
+fi
+
+root_cflags=`sh $ROOTSYS/bin/root-config --cflags`
+root_libs=`sh $ROOTSYS/bin/root-config --libs`
+#roofit_libs="-lRooFitCore -lRooFit -lMinuit -lFoam"
+#fastjet_cflags=`fastjet-config --cxxflags`
+#fastjet_libs=`fastjet-config --libs`
+extrainclude="-I/home/$USER/RootMacros"
+extrainclude="-I$PWD/include"
+#pythia_include="-I$PYTHIA8/include"
+#pythia_libs="-L$PYTHIA8/lib/archive -lpythia8 -llhapdfdummy"
+cxxflags="-g -fPIC -Wno-deprecated -O -ansi -D_GNU_SOURCE -g -O2"
+cxx="-m64"
+
+libs="$root_libs"
+flags="$cxx $cxxflags $root_cflags"
+include="$extrainclude $pythia_include"
+
+# quick fix....
+libs=`echo $libs | sed "s/-lz//g"`
+
+g++ $input $libs $flags $include -o $output  

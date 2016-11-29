@@ -902,98 +902,89 @@ int WriteOutputFilesx742_Caltech(WaveDumpConfig_t *WDcfg, WaveDumpRun_t *WDrun, 
 	BinHeader[3] = ch;
 	BinHeader[4] = EventInfo->EventCounter;
 	BinHeader[5] = EventInfo->TriggerTimeTag;
-	if (!WDrun->fout[(gr*9+ch)]) {
-	  char fname[100];
-	  if ((gr*9+ch) == 8) {
-	    sprintf(fname, "TR_%d_0.dat", gr);
-	    sprintf(trname,"TR_%d_0",gr);
-	    flag = 1;
-	  }
-	  else if ((gr*9+ch) == 17) {
-	    sprintf(fname, "TR_0_%d.dat", gr);
-	    sprintf(trname,"TR_0_%d",gr);
-	    flag = 1;
-	  }
-	  else if ((gr*9+ch) == 26) {
-	    sprintf(fname, "TR_0_%d.dat", gr);
-	    sprintf(trname,"TR_0_%d",gr);
-	    flag = 1;
-	  }
-	  else if ((gr*9+ch) == 35) {
-	    sprintf(fname, "TR_1_%d.dat", gr);
-	    sprintf(trname,"TR_1_%d",gr);
-	    flag = 1;
-	  }
-	  else 	{
+	char fname[100];
+	if (!WDrun->fout[0]) 
+	  {
 	    sprintf(fname, "wave_%d.dat", (gr*8)+ch);
 	    flag = 0;
 	  }
-	  if ((WDrun->fout[(gr*9+ch)] = fopen(fname, "wb")) == NULL)
-	    return -1;
-	}
-	if( WDcfg->OutFileFlags & OFF_HEADER) {
-	  // Write the Channel Header
-	  if(fwrite(BinHeader, sizeof(*BinHeader), 6, WDrun->fout[(gr*9+ch)]) != 6) {
-	    // error writing to file
-	    fclose(WDrun->fout[(gr*9+ch)]);
-	    WDrun->fout[(gr*9+ch)]= NULL;
-	    return -1;
+	if ((WDrun->fout[0] = fopen(fname, "wb")) == NULL) return -1;
+	
+      	if( WDcfg->OutFileFlags & OFF_HEADER) 
+	  {
+	    // Write the Channel Header
+	    if(fwrite(BinHeader, sizeof(*BinHeader), 6, WDrun->fout[0]) != 6) 
+	      {
+		// error writing to file
+		fclose(WDrun->fout[(gr*9+ch)]);
+		WDrun->fout[(gr*9+ch)]= NULL;
+		return -1;
+	      }
 	  }
-	}
-	ns = (int)fwrite( Event->DataGroup[gr].DataChannel[ch] , 1 , Size*4, WDrun->fout[(gr*9+ch)]) / 4;
-	if (ns != Size) {
-	  // error writing to file
-	  fclose(WDrun->fout[(gr*9+ch)]);
-	  WDrun->fout[(gr*9+ch)]= NULL;
-	  return -1;
-	}
-      } 
+	int group = 0;
+	int channel = 0;
+	for ( group = 0; group < 2; group++ )
+	  {
+	    for ( channel = 0; channel < 9; channel++)
+	      {
+		ns = (int)fwrite( Event->DataGroup[group].DataChannel[channel] , 1 , Size*4, WDrun->fout[0]) / 4;
+		if (ns != Size) 
+		  {
+		    // error writing to file
+		    fclose(WDrun->fout[0]);
+		    WDrun->fout[0]= NULL;
+		    return -1;
+		  }
+	      }
+	  }
+      }//END of BINARY FORMAT
       else 
 	{
 	  printf("\nASCII FORMAT\n");
 	  // Ascii file format
 	  if (!WDrun->fout[0]) 
-	   {
-	     char fname[100];
-	     sprintf(fname, "caltech_format_%d.txt", gr);
-	     //printf("my file: %s",fname);
-	     sprintf(trname,"caltech_format_%d",gr);
-	     flag = 0;
-	     printf("my file: %s\n",fname);
-	     if ( (WDrun->fout[0] = fopen(fname, "w")) == NULL ) return -1;
-	   }
-	}
-      
-      if ( WDcfg->OutFileFlags & OFF_HEADER ) 
-	{
-	  // Write the Channel Header
-	  fprintf(WDrun->fout[(gr*9+ch)], "Record Length: %d\n", Size);
-	  fprintf(WDrun->fout[(gr*9+ch)], "BoardID: %2d\n", EventInfo->BoardId);
-	  if (flag)
-	    fprintf(WDrun->fout[(gr*9+ch)], "Channel: %s\n",  trname);
-	  else
-	    fprintf(WDrun->fout[(gr*9+ch)], "Channel: %d\n",  (gr*8)+ ch);
-	  fprintf(WDrun->fout[(gr*9+ch)], "Event Number: %d\n", EventInfo->EventCounter);
-	  fprintf(WDrun->fout[(gr*9+ch)], "Pattern: 0x%04X\n", EventInfo->Pattern & 0xFFFF);
-	  fprintf(WDrun->fout[(gr*9+ch)], "Trigger Time Stamp: %u\n", Event->DataGroup[gr].TriggerTimeTag);
-	  fprintf(WDrun->fout[(gr*9+ch)], "DC offset (DAC): 0x%04X\n", WDcfg->DCoffset[ch] & 0xFFFF);
-	  fprintf(WDrun->fout[(gr*9+ch)], "Start Index Cell: %d\n", Event->DataGroup[gr].StartIndexCell);
-	  flag = 0;
-	}
-      for( j = 0; j < Size; j++ ) 
-	{
-	  fprintf(WDrun->fout[0], "%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
-		  Event->DataGroup[0].DataChannel[0][j], Event->DataGroup[0].DataChannel[1][j],
-		  Event->DataGroup[0].DataChannel[2][j], Event->DataGroup[0].DataChannel[3][j],
-		  Event->DataGroup[0].DataChannel[4][j], Event->DataGroup[0].DataChannel[5][j],
-		  Event->DataGroup[0].DataChannel[6][j], Event->DataGroup[0].DataChannel[7][j],
-		  Event->DataGroup[0].DataChannel[8][j],
-		  Event->DataGroup[1].DataChannel[0][j], Event->DataGroup[1].DataChannel[1][j],
-		  Event->DataGroup[1].DataChannel[2][j], Event->DataGroup[1].DataChannel[3][j],
-		  Event->DataGroup[1].DataChannel[4][j], Event->DataGroup[1].DataChannel[5][j],
-		  Event->DataGroup[1].DataChannel[6][j], Event->DataGroup[1].DataChannel[7][j],
-		  Event->DataGroup[1].DataChannel[8][j]
-		  );
+	    {
+	      char fname[100];
+	      sprintf(fname, "caltech_format_%d.txt", gr);
+	      //printf("my file: %s",fname);
+	      sprintf(trname,"caltech_format_%d",gr);
+	      flag = 0;
+	      printf("my file: %s\n",fname);
+	      if ( (WDrun->fout[0] = fopen(fname, "w")) == NULL ) return -1;
+	    }
+	  
+	  
+	  if ( WDcfg->OutFileFlags & OFF_HEADER ) 
+	    {
+	      // Write the Channel Header
+	      fprintf(WDrun->fout[(gr*9+ch)], "Record Length: %d\n", Size);
+	      fprintf(WDrun->fout[(gr*9+ch)], "BoardID: %2d\n", EventInfo->BoardId);
+	      if (flag)
+		fprintf(WDrun->fout[(gr*9+ch)], "Channel: %s\n",  trname);
+	      else
+		fprintf(WDrun->fout[(gr*9+ch)], "Channel: %d\n",  (gr*8)+ ch);
+	      fprintf(WDrun->fout[(gr*9+ch)], "Event Number: %d\n", EventInfo->EventCounter);
+	      fprintf(WDrun->fout[(gr*9+ch)], "Pattern: 0x%04X\n", EventInfo->Pattern & 0xFFFF);
+	      fprintf(WDrun->fout[(gr*9+ch)], "Trigger Time Stamp: %u\n", Event->DataGroup[gr].TriggerTimeTag);
+	      fprintf(WDrun->fout[(gr*9+ch)], "DC offset (DAC): 0x%04X\n", WDcfg->DCoffset[ch] & 0xFFFF);
+	      fprintf(WDrun->fout[(gr*9+ch)], "Start Index Cell: %d\n", Event->DataGroup[gr].StartIndexCell);
+	      flag = 0;
+	    }
+	  for( j = 0; j < Size; j++ ) 
+	    {
+	      fprintf(WDrun->fout[0], "%.1f %.1f %.1f %.1f %.1f %.1f %.1f %.1f %.1f %.1f %.1f %.1f %.1f %.1f %.1f %.1f %.1f %.1f\n",
+		      Event->DataGroup[0].DataChannel[0][j], Event->DataGroup[0].DataChannel[1][j],
+		      Event->DataGroup[0].DataChannel[2][j], Event->DataGroup[0].DataChannel[3][j],
+		      Event->DataGroup[0].DataChannel[4][j], Event->DataGroup[0].DataChannel[5][j],
+		      Event->DataGroup[0].DataChannel[6][j], Event->DataGroup[0].DataChannel[7][j],
+		      Event->DataGroup[0].DataChannel[8][j],
+		      Event->DataGroup[1].DataChannel[0][j], Event->DataGroup[1].DataChannel[1][j],
+		      Event->DataGroup[1].DataChannel[2][j], Event->DataGroup[1].DataChannel[3][j],
+		      Event->DataGroup[1].DataChannel[4][j], Event->DataGroup[1].DataChannel[5][j],
+		      Event->DataGroup[1].DataChannel[6][j], Event->DataGroup[1].DataChannel[7][j],
+		      Event->DataGroup[1].DataChannel[8][j]
+		      );
+	    }
 	}
     }
     if ( WDrun->SingleWrite ) 

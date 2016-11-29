@@ -57,8 +57,8 @@ GNUPLOT_PATH  "/usr/bin/"
 # OUTPUT_FILE_FORMAT: output file can be either ASCII (column of decimal numbers) or binary 
 # (2 bytes per sample, except for Mod 721 and Mod 731 that is 1 byte per sample)
 # options: BINARY, ASCII
-OUTPUT_FILE_FORMAT  ASCII
-#OUTPUT_FILE_FORMAT  BINARY
+#OUTPUT_FILE_FORMAT  ASCII
+OUTPUT_FILE_FORMAT  BINARY
 
 # OUTPUT_FILE_HEADER: if enabled, the header is included in the output file data
 # options: YES, NO

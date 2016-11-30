@@ -47,6 +47,7 @@
 #include "fft.h"
 #include "keyb.h"
 #include "X742CorrectionRoutines.h"
+#include "stdio.h"
 
 /* Error messages */
 typedef enum  {
@@ -905,7 +906,7 @@ int WriteOutputFilesx742_Caltech(WaveDumpConfig_t *WDcfg, WaveDumpRun_t *WDrun, 
 	char fname[100];
 	if (!WDrun->fout[0]) 
 	  {
-	    sprintf(fname, "wave_%d.dat", (gr*8)+ch);
+	    sprintf(fname, "wave_%d.dat", 0);
 	    flag = 0;
 	  }
 	if ((WDrun->fout[0] = fopen(fname, "wb")) == NULL) return -1;
@@ -913,30 +914,46 @@ int WriteOutputFilesx742_Caltech(WaveDumpConfig_t *WDcfg, WaveDumpRun_t *WDrun, 
       	if( WDcfg->OutFileFlags & OFF_HEADER) 
 	  {
 	    // Write the Channel Header
-	    if(fwrite(BinHeader, sizeof(*BinHeader), 6, WDrun->fout[0]) != 6) 
+	    //fprintf(WDrun->fout[(gr*9+ch)], "Record Length: %d\n", Size);
+	    /*	int prt=0;
+		for(prt=0;prt<6;prt++){
+			fprintf(WDrun->fout[0],"%s\n",BinHeader[prt]); 
+	    */
+	      fprintf(WDrun->fout[(gr*9+ch)], "Record Length: %d\n", Size);
+	      fprintf(WDrun->fout[(gr*9+ch)], "BoardID: %2d\n", EventInfo->BoardId);
+	      if (flag)
+		fprintf(WDrun->fout[(gr*9+ch)], "Channel: %s\n",  trname);
+	      else
+		fprintf(WDrun->fout[(gr*9+ch)], "Channel: %d\n",  (gr*8)+ ch);
+	      fprintf(WDrun->fout[(gr*9+ch)], "Event Number: %d\n", EventInfo->EventCounter);
+	      fprintf(WDrun->fout[(gr*9+ch)], "Pattern: 0x%04X\n", EventInfo->Pattern & 0xFFFF);
+	      fprintf(WDrun->fout[(gr*9+ch)], "Trigger Time Stamp: %u\n", Event->DataGroup[gr].TriggerTimeTag);
+	      fprintf(WDrun->fout[(gr*9+ch)], "DC offset (DAC): 0x%04X\n", WDcfg->DCoffset[ch] & 0xFFFF);
+	      fprintf(WDrun->fout[(gr*9+ch)], "Start Index Cell: %d\n", Event->DataGroup[gr].StartIndexCell);
+	      flag = 0;
+	   /* if(fwrite(BinHeader, sizeof(*BinHeader), 6, WDrun->fout[0]) != 6) 
 	      {
 		// error writing to file
-		fclose(WDrun->fout[(gr*9+ch)]);
-		WDrun->fout[(gr*9+ch)]= NULL;
+		fclose(WDrun->fout[0]);
+		WDrun->fout[0]= NULL;
 		return -1;
-	      }
+	      }*/
 	  }
 	int group = 0;
 	int channel = 0;
+	for( j = 0; j < Size; j++ ){ 
 	for ( group = 0; group < 2; group++ )
 	  {
 	    for ( channel = 0; channel < 9; channel++)
 	      {
-		ns = (int)fwrite( Event->DataGroup[group].DataChannel[channel] , 1 , Size*4, WDrun->fout[0]) / 4;
-		if (ns != Size) 
-		  {
-		    // error writing to file
-		    fclose(WDrun->fout[0]);
-		    WDrun->fout[0]= NULL;
-		    return -1;
-		  }
+		fprintf(WDrun->fout[0],"%x  ",Event->DataGroup[group].DataChannel[channel]);
 	      }
 	  }
+	    fprintf(WDrun->fout[0],"\n");
+	  }
+	    fclose(WDrun->fout[0]);
+	    WDrun->fout[0]= NULL;
+            return 0;
       }//END of BINARY FORMAT
       else 
 	{
@@ -1378,8 +1395,8 @@ InterruptTimeout:
                     // Note: use a thread here to allow parallel readout and file writing
                     if (BoardInfo.FamilyCode == CAEN_DGTZ_XX742_FAMILY_CODE) {
 		      printf("SAVING FILE IN 742 MODE!!! %d",WDrun.ContinuousWrite );
-		      //ret = WriteOutputFilesx742(&WDcfg, &WDrun, &EventInfo, Event742); 
-		      ret = WriteOutputFilesx742_Caltech(&WDcfg, &WDrun, &EventInfo, Event742);
+		      ret = WriteOutputFilesx742(&WDcfg, &WDrun, &EventInfo, Event742); 
+		      //ret = WriteOutputFilesx742_Caltech(&WDcfg, &WDrun, &EventInfo, Event742);
                     }
                     else if (WDcfg.Nbit == 8) {
                         ret = WriteOutputFiles(&WDcfg, &WDrun, &EventInfo, Event8);

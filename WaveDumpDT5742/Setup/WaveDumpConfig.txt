@@ -62,7 +62,7 @@ OUTPUT_FILE_FORMAT  BINARY
 
 # OUTPUT_FILE_HEADER: if enabled, the header is included in the output file data
 # options: YES, NO
-OUTPUT_FILE_HEADER  YES
+OUTPUT_FILE_HEADER  NO
 
 # RECORD_LENGTH = number of samples in the acquisition window
 # For the models 742 the options available are only 1024, 520, 256 and 136

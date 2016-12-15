@@ -39,11 +39,11 @@ int main()
   for (int i = 0; i < 1024; i++ ) std::cout << buffer[i+6] << " " << buffer[5*1024+i+6] << " " << buffer[2048+i+6] << std::endl;
 
   //event2
-
+/*
   result = fread (buffer,1,lSize,pFile);
   std::cout << "EVENT 2  --> "<< result << " " << lSize << std::endl;
   if (result != lSize) {fputs ("Reading error\n",stderr); exit (3);}
-
+*/
   for (int i = 0; i < 1024; i++ ) std::cout << buffer[i+6] << " " << buffer[5*1024+i+6] << " " << buffer[2048+i+6] << std::endl;
   /* the whole file is now loaded in the memory buffer. */
 
@@ -56,7 +56,25 @@ int main()
   //printf("%f %f %f %f\n", myN, myN2, myN3, myN4);
   // terminate
   TFile *f = new TFile("testBinary.root","recreate");
+  TTree *tree = new TTree("Tree","Tree");
 
+  int event;
+  float time[2][1024];
+  short raw[18][1024];
+  short channel[18][1024];
+  float channelCorrected[18][1024];
+
+  tree->Branch("event", &event, "event/I");
+  tree->Branch("raw", raw, "raw[18][1024]/S");   
+  tree->Branch("channel", channel, "channel[18][1024]/S");
+  tree->Branch("time", time, "time[2][1024]/F");
+
+  //*************************
+  //Event Loop
+  //*************************
+//  for( int eventn = 0; eventn < nEvents; eventn++){ 
+
+/*
   TH1F *ch0 = new TH1F("ch0","ch0",1024,0,1024);
   TH1F *ch1 = new TH1F("ch1","ch1",1024,0,1024);
   TH1F *ch2 = new TH1F("ch2","ch2",1024,0,1024);
@@ -78,10 +96,11 @@ int main()
   TH1F *ch15 = new TH1F("ch15","ch15",1024,0,1024);
 
   TH1F *tr1 = new TH1F("tr1","tr1",1024,0,1024);	
-
+*/
   double x;
   int ctr = 1;
   //x = *(buffer+ctr);
+/*  
   while(ctr>0 && ctr<1024+1) { x = *(buffer+ctr); ch0->SetBinContent(ctr,x); ctr++;}
 	    while(ctr>1024 && ctr<1024*2+1) { x = *(buffer+ctr); ch1->SetBinContent(ctr-1024,x); ctr++;}
 	    while(ctr>1024*2 && ctr<1024*3+1) { x = *(buffer+ctr); ch2->SetBinContent(ctr-1024*2,x); ctr++;}
@@ -103,7 +122,7 @@ int main()
 	    while(ctr>1024*16 && ctr<1024*17+1) { x = *(buffer+ctr); ch15->SetBinContent(ctr-1024*16,x); ctr++;}
 	
 	    while(ctr>1024*17 && ctr<1024*18+1) { tr1->SetBinContent(ctr-1024*17,x); ctr++;}
-
+*/
   f->Write();
   f->Close();
   fclose (pFile);

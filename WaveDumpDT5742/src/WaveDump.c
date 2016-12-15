@@ -48,7 +48,18 @@
 #include "keyb.h"
 #include "X742CorrectionRoutines.h"
 #include "stdio.h"
-
+/*#include "TROOT.h"
+#include "TFile.h"
+#include "TH1F.h"
+#include <cstdio>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+*/
 /* Error messages */
 typedef enum  {
     ERR_NONE= 0,
@@ -751,141 +762,149 @@ int WriteOutputFiles(WaveDumpConfig_t *WDcfg, WaveDumpRun_t *WDrun, CAEN_DGTZ_Ev
 */
 int WriteOutputFilesx742(WaveDumpConfig_t *WDcfg, WaveDumpRun_t *WDrun, CAEN_DGTZ_EventInfo_t *EventInfo, CAEN_DGTZ_X742_EVENT_t *Event)
 {
+  int gr,ch, j, ns;
+  char trname[10], flag = 0; 
+  for (gr=0;gr<(WDcfg->Nch/8);gr++) {
+    if (Event->GrPresent[gr]) {
+      for(ch=0; ch<9; ch++) {
+	int Size = Event->DataGroup[gr].ChSize[ch];
+	if (Size <= 0) {
+	  continue;
+	}
+	
+	// Check the file format type
+	if( WDcfg->OutFileFlags& OFF_BINARY) {
+	  // Binary file format
+	  uint32_t BinHeader[6];
+	  BinHeader[0] = (WDcfg->Nbit == 8) ? Size + 6*sizeof(*BinHeader) : Size*4 + 6*sizeof(*BinHeader);
+	  BinHeader[1] = EventInfo->BoardId;
+	  BinHeader[2] = EventInfo->Pattern;
+	  BinHeader[3] = ch;
+	  BinHeader[4] = EventInfo->EventCounter;
+	  BinHeader[5] = EventInfo->TriggerTimeTag;
+	  if (!WDrun->fout[(gr*9+ch)]) {
+	    char fname[100];
+	    if ((gr*9+ch) == 8) {
+	      sprintf(fname, "TR_%d_0.dat", gr);
+	      sprintf(trname,"TR_%d_0",gr);
+	      flag = 1;
+	    }
+	    else if ((gr*9+ch) == 17) {
+	      sprintf(fname, "TR_0_%d.dat", gr);
+	      sprintf(trname,"TR_0_%d",gr);
+	      flag = 1;
+	    }
+	    else if ((gr*9+ch) == 26) {
+	      sprintf(fname, "TR_0_%d.dat", gr);
+	      sprintf(trname,"TR_0_%d",gr);
+	      flag = 1;
+	    }
+	    else if ((gr*9+ch) == 35) {
+	      sprintf(fname, "TR_1_%d.dat", gr);
+	      sprintf(trname,"TR_1_%d",gr);
+	      flag = 1;
+	    }
+	    else 	{
+	      sprintf(fname, "wave_%d.dat", (gr*8)+ch);
+	      flag = 0;
+	    }
+	    if ((WDrun->fout[(gr*9+ch)] = fopen(fname, "wb")) == NULL)
+	      return -1;
+	  }
+	  if( WDcfg->OutFileFlags & OFF_HEADER) {
+	    // Write the Channel Header
+	    if(fwrite(BinHeader, sizeof(*BinHeader), 6, WDrun->fout[(gr*9+ch)]) != 6) {
+	      // error writing to file
+	      fclose(WDrun->fout[(gr*9+ch)]);
+	      WDrun->fout[(gr*9+ch)]= NULL;
+	      return -1;
+	    }
+	  }
+	  ns = (int)fwrite( Event->DataGroup[gr].DataChannel[ch] , 1 , Size*4, WDrun->fout[(gr*9+ch)]) / 4;
+	  if (ns != Size) {
+	    // error writing to file
+	    fclose(WDrun->fout[(gr*9+ch)]);
+	    WDrun->fout[(gr*9+ch)]= NULL;
+	    return -1;
+	  }
+	} else {
+	  // Ascii file format
+	  if (!WDrun->fout[(gr*9+ch)]) {
+	    char fname[100];
+	    if ((gr*9+ch) == 8) {
+	      sprintf(fname, "TR_%d_0.txt", gr);
+	      sprintf(trname,"TR_%d_0",gr);
+	      flag = 1;
+	    }
+	    else if ((gr*9+ch) == 17) {
+	      sprintf(fname, "TR_0_%d.txt", gr);
+	      sprintf(trname,"TR_0_%d",gr);
+	      flag = 1;
+	    }
+	    else if ((gr*9+ch) == 26) {
+	      sprintf(fname, "TR_0_%d.txt", gr);
+	      sprintf(trname,"TR_0_%d",gr);
+	      flag = 1;
+	    }
+	    else if ((gr*9+ch) == 35) {
+	      sprintf(fname, "TR_1_%d.txt", gr);
+	      sprintf(trname,"TR_1_%d",gr);
+	      flag = 1;
+	    }
+	    else 	{
+	      sprintf(fname, "wave_%d.txt", (gr*8)+ch);
+	      flag = 0;
+	    }
+	    if ((WDrun->fout[(gr*9+ch)] = fopen(fname, "w")) == NULL)
+	      return -1;
+	  }
+	  if( WDcfg->OutFileFlags & OFF_HEADER) {
+	    // Write the Channel Header
+	    fprintf(WDrun->fout[(gr*9+ch)], "Record Length: %d\n", Size);
+	    fprintf(WDrun->fout[(gr*9+ch)], "BoardID: %2d\n", EventInfo->BoardId);
+	    if (flag)
+	      fprintf(WDrun->fout[(gr*9+ch)], "Channel: %s\n",  trname);
+	    else
+	      fprintf(WDrun->fout[(gr*9+ch)], "Channel: %d\n",  (gr*8)+ ch);
+	    fprintf(WDrun->fout[(gr*9+ch)], "Event Number: %d\n", EventInfo->EventCounter);
+	    fprintf(WDrun->fout[(gr*9+ch)], "Pattern: 0x%04X\n", EventInfo->Pattern & 0xFFFF);
+	    fprintf(WDrun->fout[(gr*9+ch)], "Trigger Time Stamp: %u\n", Event->DataGroup[gr].TriggerTimeTag);
+	    fprintf(WDrun->fout[(gr*9+ch)], "DC offset (DAC): 0x%04X\n", WDcfg->DCoffset[ch] & 0xFFFF);
+	    fprintf(WDrun->fout[(gr*9+ch)], "Start Index Cell: %d\n", Event->DataGroup[gr].StartIndexCell);
+	    flag = 0;
+	  }
+	  for(j=0; j<Size; j++) {
+	    if ( gr*9+ch == 0 ) fprintf(WDrun->fout[(gr*9+ch)], "%f %f %f %f %f\n",
+					Event->DataGroup[gr].DataChannel[ch][j], Event->DataGroup[gr].DataChannel[ch+1][j],
+					Event->DataGroup[gr].DataChannel[ch][j+2],  Event->DataGroup[gr].DataChannel[ch][j+3],
+					Event->DataGroup[gr].DataChannel[ch][j+4] );
+	    else fprintf(WDrun->fout[(gr*9+ch)], "%f\n", Event->DataGroup[gr].DataChannel[ch][j]);
+	  }
+	}
+	if (WDrun->SingleWrite) {
+	  fclose(WDrun->fout[(gr*9+ch)]);
+	  WDrun->fout[(gr*9+ch)]= NULL;
+	}
+      }
+    }
+  }
+  return 0;
+  
+}
+
+int WriteOutputFilesx742_Caltech(WaveDumpConfig_t *WDcfg, WaveDumpRun_t *WDrun, CAEN_DGTZ_EventInfo_t *EventInfo, CAEN_DGTZ_X742_EVENT_t *Event)
+{
+  printf("\nSTARTING WRITING TO FILE\n");
     int gr,ch, j, ns;
     char trname[10], flag = 0; 
-    for (gr=0;gr<(WDcfg->Nch/8);gr++) {
+ /*   for (gr=0;gr<(WDcfg->Nch/8);gr++) {
         if (Event->GrPresent[gr]) {
             for(ch=0; ch<9; ch++) {
                 int Size = Event->DataGroup[gr].ChSize[ch];
                 if (Size <= 0) {
                     continue;
                 }
-
-                // Check the file format type
-                if( WDcfg->OutFileFlags& OFF_BINARY) {
-                    // Binary file format
-                    uint32_t BinHeader[6];
-                    BinHeader[0] = (WDcfg->Nbit == 8) ? Size + 6*sizeof(*BinHeader) : Size*4 + 6*sizeof(*BinHeader);
-                    BinHeader[1] = EventInfo->BoardId;
-                    BinHeader[2] = EventInfo->Pattern;
-                    BinHeader[3] = ch;
-                    BinHeader[4] = EventInfo->EventCounter;
-                    BinHeader[5] = EventInfo->TriggerTimeTag;
-                    if (!WDrun->fout[(gr*9+ch)]) {
-                        char fname[100];
-                        if ((gr*9+ch) == 8) {
-                            sprintf(fname, "TR_%d_0.dat", gr);
-                            sprintf(trname,"TR_%d_0",gr);
-                            flag = 1;
-                        }
-                        else if ((gr*9+ch) == 17) {
-                            sprintf(fname, "TR_0_%d.dat", gr);
-                            sprintf(trname,"TR_0_%d",gr);
-                            flag = 1;
-                        }
-                        else if ((gr*9+ch) == 26) {
-                            sprintf(fname, "TR_0_%d.dat", gr);
-                            sprintf(trname,"TR_0_%d",gr);
-                            flag = 1;
-                        }
-                        else if ((gr*9+ch) == 35) {
-                            sprintf(fname, "TR_1_%d.dat", gr);
-                            sprintf(trname,"TR_1_%d",gr);
-                            flag = 1;
-                        }
-                        else 	{
-                            sprintf(fname, "wave_%d.dat", (gr*8)+ch);
-                            flag = 0;
-                        }
-                        if ((WDrun->fout[(gr*9+ch)] = fopen(fname, "wb")) == NULL)
-                            return -1;
-                    }
-                    if( WDcfg->OutFileFlags & OFF_HEADER) {
-                        // Write the Channel Header
-                        if(fwrite(BinHeader, sizeof(*BinHeader), 6, WDrun->fout[(gr*9+ch)]) != 6) {
-                            // error writing to file
-                            fclose(WDrun->fout[(gr*9+ch)]);
-                            WDrun->fout[(gr*9+ch)]= NULL;
-                            return -1;
-                        }
-                    }
-                    ns = (int)fwrite( Event->DataGroup[gr].DataChannel[ch] , 1 , Size*4, WDrun->fout[(gr*9+ch)]) / 4;
-                    if (ns != Size) {
-                        // error writing to file
-                        fclose(WDrun->fout[(gr*9+ch)]);
-                        WDrun->fout[(gr*9+ch)]= NULL;
-                        return -1;
-                    }
-                } else {
-                    // Ascii file format
-                    if (!WDrun->fout[(gr*9+ch)]) {
-                        char fname[100];
-                        if ((gr*9+ch) == 8) {
-                            sprintf(fname, "TR_%d_0.txt", gr);
-                            sprintf(trname,"TR_%d_0",gr);
-                            flag = 1;
-                        }
-                        else if ((gr*9+ch) == 17) {
-                            sprintf(fname, "TR_0_%d.txt", gr);
-                            sprintf(trname,"TR_0_%d",gr);
-                            flag = 1;
-                        }
-                        else if ((gr*9+ch) == 26) {
-                            sprintf(fname, "TR_0_%d.txt", gr);
-                            sprintf(trname,"TR_0_%d",gr);
-                            flag = 1;
-                        }
-                        else if ((gr*9+ch) == 35) {
-                            sprintf(fname, "TR_1_%d.txt", gr);
-                            sprintf(trname,"TR_1_%d",gr);
-                            flag = 1;
-                        }
-                        else 	{
-                            sprintf(fname, "wave_%d.txt", (gr*8)+ch);
-                            flag = 0;
-                        }
-                        if ((WDrun->fout[(gr*9+ch)] = fopen(fname, "w")) == NULL)
-                            return -1;
-                    }
-                    if( WDcfg->OutFileFlags & OFF_HEADER) {
-                        // Write the Channel Header
-                        fprintf(WDrun->fout[(gr*9+ch)], "Record Length: %d\n", Size);
-                        fprintf(WDrun->fout[(gr*9+ch)], "BoardID: %2d\n", EventInfo->BoardId);
-                        if (flag)
-                            fprintf(WDrun->fout[(gr*9+ch)], "Channel: %s\n",  trname);
-                        else
-                            fprintf(WDrun->fout[(gr*9+ch)], "Channel: %d\n",  (gr*8)+ ch);
-                        fprintf(WDrun->fout[(gr*9+ch)], "Event Number: %d\n", EventInfo->EventCounter);
-                        fprintf(WDrun->fout[(gr*9+ch)], "Pattern: 0x%04X\n", EventInfo->Pattern & 0xFFFF);
-                        fprintf(WDrun->fout[(gr*9+ch)], "Trigger Time Stamp: %u\n", Event->DataGroup[gr].TriggerTimeTag);
-                        fprintf(WDrun->fout[(gr*9+ch)], "DC offset (DAC): 0x%04X\n", WDcfg->DCoffset[ch] & 0xFFFF);
-                        fprintf(WDrun->fout[(gr*9+ch)], "Start Index Cell: %d\n", Event->DataGroup[gr].StartIndexCell);
-                        flag = 0;
-                    }
-                    for(j=0; j<Size; j++) {
-		      if ( gr*9+ch == 0 ) fprintf(WDrun->fout[(gr*9+ch)], "%f %f %f %f %f\n",
-						  Event->DataGroup[gr].DataChannel[ch][j], Event->DataGroup[gr].DataChannel[ch+1][j],
-						  Event->DataGroup[gr].DataChannel[ch][j+2],  Event->DataGroup[gr].DataChannel[ch][j+3],
-						  Event->DataGroup[gr].DataChannel[ch][j+4] );
-		      else fprintf(WDrun->fout[(gr*9+ch)], "%f\n", Event->DataGroup[gr].DataChannel[ch][j]);
-                    }
-                }
-                if (WDrun->SingleWrite) {
-                    fclose(WDrun->fout[(gr*9+ch)]);
-                    WDrun->fout[(gr*9+ch)]= NULL;
-                }
-            }
-        }
-    }
-    return 0;
-
-}
-
-int WriteOutputFilesx742_Caltech(WaveDumpConfig_t *WDcfg, WaveDumpRun_t *WDrun, CAEN_DGTZ_EventInfo_t *EventInfo, CAEN_DGTZ_X742_EVENT_t *Event)
-{
-  printf("\nSTARTING WRITING TO FILE\n");
-    int gr, ch, j, ns;
-    char trname[100], flag = 0; 
+*/
     gr = 0;
     ch = 0;
     if ( Event->GrPresent[gr] && Event->GrPresent[gr+1] ) {
@@ -903,74 +922,63 @@ int WriteOutputFilesx742_Caltech(WaveDumpConfig_t *WDcfg, WaveDumpRun_t *WDrun, 
 	BinHeader[3] = ch;
 	BinHeader[4] = EventInfo->EventCounter;
 	BinHeader[5] = EventInfo->TriggerTimeTag;
+	// Binary file format
 	char fname[100];
 	if (!WDrun->fout[0]) 
 	  {
 	    sprintf(fname, "wave_%d.dat", 0);
 	    flag = 0;
+	    if ((WDrun->fout[0] = fopen(fname, "wb")) == NULL) return -1;
 	  }
-	if ((WDrun->fout[0] = fopen(fname, "wb")) == NULL) return -1;
 	
-      	if( WDcfg->OutFileFlags & OFF_HEADER) 
+	if( WDcfg->OutFileFlags & OFF_HEADER) 
 	  {
 	    // Write the Channel Header
-	    //fprintf(WDrun->fout[(gr*9+ch)], "Record Length: %d\n", Size);
-	    /*	int prt=0;
-		for(prt=0;prt<6;prt++){
-			fprintf(WDrun->fout[0],"%s\n",BinHeader[prt]); 
-	    */
-	      fprintf(WDrun->fout[(gr*9+ch)], "Record Length: %d\n", Size);
-	      fprintf(WDrun->fout[(gr*9+ch)], "BoardID: %2d\n", EventInfo->BoardId);
-	      if (flag)
-		fprintf(WDrun->fout[(gr*9+ch)], "Channel: %s\n",  trname);
-	      else
-		fprintf(WDrun->fout[(gr*9+ch)], "Channel: %d\n",  (gr*8)+ ch);
-	      fprintf(WDrun->fout[(gr*9+ch)], "Event Number: %d\n", EventInfo->EventCounter);
-	      fprintf(WDrun->fout[(gr*9+ch)], "Pattern: 0x%04X\n", EventInfo->Pattern & 0xFFFF);
-	      fprintf(WDrun->fout[(gr*9+ch)], "Trigger Time Stamp: %u\n", Event->DataGroup[gr].TriggerTimeTag);
-	      fprintf(WDrun->fout[(gr*9+ch)], "DC offset (DAC): 0x%04X\n", WDcfg->DCoffset[ch] & 0xFFFF);
-	      fprintf(WDrun->fout[(gr*9+ch)], "Start Index Cell: %d\n", Event->DataGroup[gr].StartIndexCell);
-	      flag = 0;
-	   /* if(fwrite(BinHeader, sizeof(*BinHeader), 6, WDrun->fout[0]) != 6) 
+	    if(fwrite(BinHeader, sizeof(*BinHeader), 6, WDrun->fout[(gr*9+ch)]) != 6) 
 	      {
 		// error writing to file
-		fclose(WDrun->fout[0]);
-		WDrun->fout[0]= NULL;
+		fclose(WDrun->fout[(gr*9+ch)]);
+		WDrun->fout[(gr*9+ch)]= NULL;
 		return -1;
-	      }*/
+	      }
 	  }
 	int group = 0;
 	int channel = 0;
-	for( j = 0; j < Size; j++ ){ 
+	//for( j = 0; j < Size; j++ ){ 
 	for ( group = 0; group < 2; group++ )
 	  {
 	    for ( channel = 0; channel < 9; channel++)
 	      {
-		fprintf(WDrun->fout[0],"%x  ",Event->DataGroup[group].DataChannel[channel]);
+		//fprintf(WDrun->fout[0],"%x  ",Event->DataGroup[group].DataChannel[channel]);
+		ns = (int)fwrite( Event->DataGroup[group].DataChannel[channel] , 1 , Size*4, WDrun->fout[0]) / 4;
+		if (ns != Size) {
+		  // error writing to file
+		  printf("ERROR WRITING THE FILE!!!!!!!!!!!!!!!!!");
+		  fclose(WDrun->fout[0]);
+		  WDrun->fout[0]= NULL;
+		  return -1;
+		}
 	      }
 	  }
-	    fprintf(WDrun->fout[0],"\n");
-	  }
-	    fclose(WDrun->fout[0]);
-	    WDrun->fout[0]= NULL;
-            return 0;
       }//END of BINARY FORMAT
       else 
 	{
-	  printf("\nASCII FORMAT\n");
+	  printf("\n-->ASCII FORMAT\n");
+	  printf("DEBUG-1\n");
 	  // Ascii file format
 	  if (!WDrun->fout[0]) 
 	    {
+	      printf("DEBUG0\n");
 	      char fname[100];
 	      sprintf(fname, "caltech_format_%d.txt", gr);
 	      //printf("my file: %s",fname);
-	      sprintf(trname,"caltech_format_%d",gr);
+	      //sprintf(trname,"caltech_format_%d",gr);
 	      flag = 0;
 	      printf("my file: %s\n",fname);
 	      if ( (WDrun->fout[0] = fopen(fname, "w")) == NULL ) return -1;
 	    }
 	  
-	  
+	  printf("DEBUG\n");
 	  if ( WDcfg->OutFileFlags & OFF_HEADER ) 
 	    {
 	      // Write the Channel Header
@@ -1002,13 +1010,13 @@ int WriteOutputFilesx742_Caltech(WaveDumpConfig_t *WDcfg, WaveDumpRun_t *WDrun, 
 		      Event->DataGroup[1].DataChannel[8][j]
 		      );
 	    }
+	}//END OF ASCII FORMAT
+      if ( WDrun->SingleWrite ) 
+	{
+	  fclose( WDrun->fout[0] );
+	  WDrun->fout[0] = NULL;
 	}
     }
-    if ( WDrun->SingleWrite ) 
-      {
-	fclose( WDrun->fout[0] );
-	WDrun->fout[0] = NULL;
-      }
     return 0;
 }
 
@@ -1395,8 +1403,8 @@ InterruptTimeout:
                     // Note: use a thread here to allow parallel readout and file writing
                     if (BoardInfo.FamilyCode == CAEN_DGTZ_XX742_FAMILY_CODE) {
 		      printf("SAVING FILE IN 742 MODE!!! %d",WDrun.ContinuousWrite );
-		      ret = WriteOutputFilesx742(&WDcfg, &WDrun, &EventInfo, Event742); 
-		      //ret = WriteOutputFilesx742_Caltech(&WDcfg, &WDrun, &EventInfo, Event742);
+		      //ret = WriteOutputFilesx742(&WDcfg, &WDrun, &EventInfo, Event742); 
+		      ret = WriteOutputFilesx742_Caltech(&WDcfg, &WDrun, &EventInfo, Event742);
                     }
                     else if (WDcfg.Nbit == 8) {
                         ret = WriteOutputFiles(&WDcfg, &WDrun, &EventInfo, Event8);

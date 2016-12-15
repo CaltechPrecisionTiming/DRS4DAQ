@@ -8,7 +8,6 @@
 
 int main() 
 {
-  //test
   float ch[18];
   TH1F* h[18];
   TF1* f[18];

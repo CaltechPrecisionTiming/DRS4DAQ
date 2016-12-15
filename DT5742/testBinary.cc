@@ -1,5 +1,6 @@
 #include "TROOT.h"
 #include "TFile.h"
+#include "TTree.h"
 #include "TH1F.h"
 #include <cstdio>
 #include <iostream>
@@ -29,12 +30,48 @@ int main()
   // allocate memory to contain the whole file:
   buffer = (float*) malloc (sizeof(float)*lSize);
   if (buffer == NULL) {fputs ("Memory error\n",stderr); exit (2);}
+  
+  //define the ouput root file and tree
+  TFile *f = new TFile("testBinary.root","recreate");
+  TTree *tree = new TTree("Tree","Tree");
 
-  // copy the file into the buffer:
-  lSize = 73752;
-  result = fread (buffer,1,lSize,pFile);
-  std::cout << result << " " << lSize << std::endl;
-  if (result != lSize) {fputs ("Reading error\n",stderr); exit (3);}
+  int event;
+  float time[2][1024];
+  short raw[18][1024];
+  short channel[18][1024];
+  float channelCorrected[18][1024];
+
+  tree->Branch("event", &event, "event/I");
+  tree->Branch("raw", raw, "raw[18][1024]/S");   
+  tree->Branch("channel", channel, "channel[18][1024]/S");
+  tree->Branch("time", time, "time[2][1024]/F");
+
+  int  event_size = 73752;
+  int nevents = lSize/event_size;
+
+  //*************************
+  //Event Loop
+  //*************************
+  event = 0;
+  for( int ievent = 0; ievent < nevents; ievent++)
+    {
+  	// copy the file into the buffer:
+	  result = fread (buffer,1,event_size,pFile);
+	  std::cout << result << " " << ievent  << std::endl;
+	  if (result != event_size) {fputs ("Reading error\n",stderr); exit (3);}
+	  double x;
+	  x = *(buffer+6);
+	  for(int i = 0; i < 1024; i++ )
+	    { 
+ 		for(int j = 0; j < 18; j++)
+		{
+		  channel[j][i] = buffer[i+6+j*1024];
+		  raw[j][i] = buffer[i+6+j*1024];
+		}
+	    }
+	  tree->Fill();	
+	  event++;
+     }	 
 
   for (int i = 0; i < 1024; i++ ) std::cout << buffer[i+6] << " " << buffer[5*1024+i+6] << " " << buffer[2048+i+6] << std::endl;
 
@@ -55,25 +92,6 @@ int main()
   //for(int i = 0; i < 1024*18; i++ )printf("%f\n", *(buffer+i));
   //printf("%f %f %f %f\n", myN, myN2, myN3, myN4);
   // terminate
-  TFile *f = new TFile("testBinary.root","recreate");
-  TTree *tree = new TTree("Tree","Tree");
-
-  int event;
-  float time[2][1024];
-  short raw[18][1024];
-  short channel[18][1024];
-  float channelCorrected[18][1024];
-
-  tree->Branch("event", &event, "event/I");
-  tree->Branch("raw", raw, "raw[18][1024]/S");   
-  tree->Branch("channel", channel, "channel[18][1024]/S");
-  tree->Branch("time", time, "time[2][1024]/F");
-
-  //*************************
-  //Event Loop
-  //*************************
-//  for( int eventn = 0; eventn < nEvents; eventn++){ 
-
 /*
   TH1F *ch0 = new TH1F("ch0","ch0",1024,0,1024);
   TH1F *ch1 = new TH1F("ch1","ch1",1024,0,1024);
@@ -123,6 +141,7 @@ int main()
 	
 	    while(ctr>1024*17 && ctr<1024*18+1) { tr1->SetBinContent(ctr-1024*17,x); ctr++;}
 */
+  tree->Write();
   f->Write();
   f->Close();
   fclose (pFile);

@@ -897,14 +897,6 @@ int WriteOutputFilesx742_Caltech(WaveDumpConfig_t *WDcfg, WaveDumpRun_t *WDrun, 
   printf("\nSTARTING WRITING TO FILE\n");
     int gr,ch, j, ns;
     char trname[10], flag = 0; 
- /*   for (gr=0;gr<(WDcfg->Nch/8);gr++) {
-        if (Event->GrPresent[gr]) {
-            for(ch=0; ch<9; ch++) {
-                int Size = Event->DataGroup[gr].ChSize[ch];
-                if (Size <= 0) {
-                    continue;
-                }
-*/
     gr = 0;
     ch = 0;
     if ( Event->GrPresent[gr] && Event->GrPresent[gr+1] ) {
@@ -944,12 +936,10 @@ int WriteOutputFilesx742_Caltech(WaveDumpConfig_t *WDcfg, WaveDumpRun_t *WDrun, 
 	  }
 	int group = 0;
 	int channel = 0;
-	//for( j = 0; j < Size; j++ ){ 
 	for ( group = 0; group < 2; group++ )
 	  {
 	    for ( channel = 0; channel < 9; channel++)
 	      {
-		//fprintf(WDrun->fout[0],"%x  ",Event->DataGroup[group].DataChannel[channel]);
 		ns = (int)fwrite( Event->DataGroup[group].DataChannel[channel] , 1 , Size*4, WDrun->fout[0]) / 4;
 		if (ns != Size) {
 		  // error writing to file
@@ -964,11 +954,11 @@ int WriteOutputFilesx742_Caltech(WaveDumpConfig_t *WDcfg, WaveDumpRun_t *WDrun, 
       else 
 	{
 	  printf("\n-->ASCII FORMAT\n");
-	  printf("DEBUG-1\n");
+	  //printf("DEBUG-1\n");
 	  // Ascii file format
 	  if (!WDrun->fout[0]) 
 	    {
-	      printf("DEBUG0\n");
+	      //printf("DEBUG0\n");
 	      char fname[100];
 	      sprintf(fname, "caltech_format_%d.txt", gr);
 	      //printf("my file: %s",fname);
@@ -978,7 +968,7 @@ int WriteOutputFilesx742_Caltech(WaveDumpConfig_t *WDcfg, WaveDumpRun_t *WDrun, 
 	      if ( (WDrun->fout[0] = fopen(fname, "w")) == NULL ) return -1;
 	    }
 	  
-	  printf("DEBUG\n");
+	  //printf("DEBUG\n");
 	  if ( WDcfg->OutFileFlags & OFF_HEADER ) 
 	    {
 	      // Write the Channel Header

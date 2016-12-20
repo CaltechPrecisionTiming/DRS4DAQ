@@ -75,9 +75,7 @@ int main()
 	  tree->Fill();	
 	  event++;
      }	
-  //tree->Fill();	
 
-//  for (int i = 0; i < 1024; i++ ) std::cout << buffer[i+6] << " " << buffer[5*1024+i+6] << " " << buffer[2048+i+6] << std::endl;
 
   //event2
 /*
@@ -85,6 +83,7 @@ int main()
   std::cout << "EVENT 2  --> "<< result << " " << lSize << std::endl;
   if (result != lSize) {fputs ("Reading error\n",stderr); exit (3);}
 */
+//  for (int i = 0; i < 1024; i++ ) std::cout << buffer[i+6] << " " << buffer[5*1024+i+6] << " " << buffer[2048+i+6] << std::endl;
 //  for (int i = 0; i < 1024; i++ ) std::cout << buffer[i+6] << " " << buffer[5*1024+i+6] << " " << buffer[2048+i+6] << std::endl;
   /* the whole file is now loaded in the memory buffer. */
 
@@ -121,29 +120,29 @@ int main()
 
   double x;
   int ctr = 1;
-  x = *(buffer+ctr);
-  
+  buffer = buffer + 6 ;  
+ 
   while(ctr>0 && ctr<1024+1) { x = *(buffer+ctr); ch0->SetBinContent(ctr,x); ctr++;}
-	    while(ctr>1024 && ctr<1024*2+1) { x = *(buffer+ctr); ch1->SetBinContent(ctr-1024,x); ctr++;}
-	    while(ctr>1024*2 && ctr<1024*3+1) { x = *(buffer+ctr); ch2->SetBinContent(ctr-1024*2,x); ctr++;}
-	    while(ctr>1024*3 && ctr<1024*4+1) { x = *(buffer+ctr); ch3->SetBinContent(ctr-1024*3,x); ctr++;}
-	    while(ctr>1024*4 && ctr<1024*5+1) { x = *(buffer+ctr); ch4->SetBinContent(ctr-1024*4,x); ctr++;}
-	    while(ctr>1024*5 && ctr<1024*6+1) { x = *(buffer+ctr); ch5->SetBinContent(ctr-1024*5,x); ctr++;}
-	    while(ctr>1024*6 && ctr<1024*7+1) { x = *(buffer+ctr); ch6->SetBinContent(ctr-1024*6,x); ctr++;}
-	    while(ctr>1024*7 && ctr<1024*8+1) { x = *(buffer+ctr); ch7->SetBinContent(ctr-1024*7,x); ctr++;}
+  while(ctr>1024 && ctr<1024*2+1) { x = *(buffer+ctr); ch1->SetBinContent(ctr-1024,x); ctr++;}
+  while(ctr>1024*2 && ctr<1024*3+1) { x = *(buffer+ctr); ch2->SetBinContent(ctr-1024*2,x); ctr++;}
+  while(ctr>1024*3 && ctr<1024*4+1) { x = *(buffer+ctr); ch3->SetBinContent(ctr-1024*3,x); ctr++;}
+  while(ctr>1024*4 && ctr<1024*5+1) { x = *(buffer+ctr); ch4->SetBinContent(ctr-1024*4,x); ctr++;}
+  while(ctr>1024*5 && ctr<1024*6+1) { x = *(buffer+ctr); ch5->SetBinContent(ctr-1024*5,x); ctr++;}
+  while(ctr>1024*6 && ctr<1024*7+1) { x = *(buffer+ctr); ch6->SetBinContent(ctr-1024*6,x); ctr++;}
+  while(ctr>1024*7 && ctr<1024*8+1) { x = *(buffer+ctr); ch7->SetBinContent(ctr-1024*7,x); ctr++;}
 		
-	    while(ctr>1024*8 && ctr<1024*9+1) { x = *(buffer+ctr); tr0->SetBinContent(ctr-1024*8,x); ctr++;}
+  while(ctr>1024*8 && ctr<1024*9+1) { x = *(buffer+ctr); tr0->SetBinContent(ctr-1024*8,x); ctr++;}
 
-	    while(ctr>1024*9 && ctr<1024*10+1) { x = *(buffer+ctr); ch8->SetBinContent(ctr-1024*9,x); ctr++;}
-	    while(ctr>1024*10 && ctr<1024*11+1) { x = *(buffer+ctr); ch9->SetBinContent(ctr-1024*10,x); ctr++;}
-	    while(ctr>1024*11 && ctr<1024*12+1) { x = *(buffer+ctr); ch10->SetBinContent(ctr-1024*11,x); ctr++;}
-	    while(ctr>1024*12 && ctr<1024*13+1) { x = *(buffer+ctr); ch11->SetBinContent(ctr-1024*12,x); ctr++;}
-	    while(ctr>1024*13 && ctr<1024*14+1) { x = *(buffer+ctr); ch12->SetBinContent(ctr-1024*13,x); ctr++;}
-	    while(ctr>1024*14 && ctr<1024*15+1) { x = *(buffer+ctr); ch13->SetBinContent(ctr-1024*14,x); ctr++;} 
-	    while(ctr>1024*15 && ctr<1024*16+1) { x = *(buffer+ctr); ch14->SetBinContent(ctr-1024*15,x); ctr++;}
-	    while(ctr>1024*16 && ctr<1024*17+1) { x = *(buffer+ctr); ch15->SetBinContent(ctr-1024*16,x); ctr++;}
+  while(ctr>1024*9 && ctr<1024*10+1) { x = *(buffer+ctr); ch8->SetBinContent(ctr-1024*9,x); ctr++;}
+  while(ctr>1024*10 && ctr<1024*11+1) { x = *(buffer+ctr); ch9->SetBinContent(ctr-1024*10,x); ctr++;}
+  while(ctr>1024*11 && ctr<1024*12+1) { x = *(buffer+ctr); ch10->SetBinContent(ctr-1024*11,x); ctr++;}
+  while(ctr>1024*12 && ctr<1024*13+1) { x = *(buffer+ctr); ch11->SetBinContent(ctr-1024*12,x); ctr++;}
+  while(ctr>1024*13 && ctr<1024*14+1) { x = *(buffer+ctr); ch12->SetBinContent(ctr-1024*13,x); ctr++;}
+  while(ctr>1024*14 && ctr<1024*15+1) { x = *(buffer+ctr); ch13->SetBinContent(ctr-1024*14,x); ctr++;} 
+  while(ctr>1024*15 && ctr<1024*16+1) { x = *(buffer+ctr); ch14->SetBinContent(ctr-1024*15,x); ctr++;}
+  while(ctr>1024*16 && ctr<1024*17+1) { x = *(buffer+ctr); ch15->SetBinContent(ctr-1024*16,x); ctr++;}
 	
-	    while(ctr>1024*17 && ctr<1024*18+1) { tr1->SetBinContent(ctr-1024*17,x); ctr++;}
+  while(ctr>1024*17 && ctr<1024*18+1) { tr1->SetBinContent(ctr-1024*17,x); ctr++;}
 
   tree->Write();
   f->Write();

@@ -18,7 +18,7 @@ int main()
   float* buffer;
   size_t result;
 
-  pFile = fopen ( "caltech_12_14_2016_v2.dat" , "rb" );
+  pFile = fopen ( "caltech_12_14_2016_v3.dat" , "rb" );
   if (pFile==NULL) {fputs ("File error\n",stderr); exit (1);}
 
   // obtain file size:
@@ -49,6 +49,7 @@ int main()
   int  event_size = 73752;
   int nevents = lSize/event_size;
 
+  std::cout << "nevents: " << nevents << std::endl;
   //*************************
   //Event Loop
   //*************************
@@ -57,7 +58,7 @@ int main()
     {
   	// copy the file into the buffer:
 	  result = fread (buffer,1,event_size,pFile);
-	  std::cout << result << " " << ievent  << std::endl;
+	  //std::cout << result << " " << ievent  << std::endl;
 	  if (result != event_size) {fputs ("Reading error\n",stderr); exit (3);}
 	  double x;
 	  x = *(buffer+6);
@@ -71,10 +72,10 @@ int main()
 		  raw[j][i] = buffer[i+6+j*1024];
 		}
 	    }
-	  //tree->Fill();	
+	  tree->Fill();	
 	  event++;
      }	
-  tree->Fill();	
+  //tree->Fill();	
 
 //  for (int i = 0; i < 1024; i++ ) std::cout << buffer[i+6] << " " << buffer[5*1024+i+6] << " " << buffer[2048+i+6] << std::endl;
 

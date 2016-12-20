@@ -18,7 +18,7 @@ int main()
   float* buffer;
   size_t result;
 
-  pFile = fopen ( "caltech_12_14_2016_v3.dat" , "rb" );
+  pFile = fopen ( "caltech_12_14_2016_v2.dat" , "rb" );
   if (pFile==NULL) {fputs ("File error\n",stderr); exit (1);}
 
   // obtain file size:
@@ -63,17 +63,20 @@ int main()
 	  x = *(buffer+6);
 	  for(int i = 0; i < 1024; i++ )
 	    { 
+		time[0][i] = i*0.2;
+		time[1][i] = i*0.2;
  		for(int j = 0; j < 18; j++)
 		{
 		  channel[j][i] = buffer[i+6+j*1024];
 		  raw[j][i] = buffer[i+6+j*1024];
 		}
 	    }
-	  tree->Fill();	
+	  //tree->Fill();	
 	  event++;
-     }	 
+     }	
+  tree->Fill();	
 
-  for (int i = 0; i < 1024; i++ ) std::cout << buffer[i+6] << " " << buffer[5*1024+i+6] << " " << buffer[2048+i+6] << std::endl;
+//  for (int i = 0; i < 1024; i++ ) std::cout << buffer[i+6] << " " << buffer[5*1024+i+6] << " " << buffer[2048+i+6] << std::endl;
 
   //event2
 /*
@@ -81,7 +84,7 @@ int main()
   std::cout << "EVENT 2  --> "<< result << " " << lSize << std::endl;
   if (result != lSize) {fputs ("Reading error\n",stderr); exit (3);}
 */
-  for (int i = 0; i < 1024; i++ ) std::cout << buffer[i+6] << " " << buffer[5*1024+i+6] << " " << buffer[2048+i+6] << std::endl;
+//  for (int i = 0; i < 1024; i++ ) std::cout << buffer[i+6] << " " << buffer[5*1024+i+6] << " " << buffer[2048+i+6] << std::endl;
   /* the whole file is now loaded in the memory buffer. */
 
   //float myN =  *buffer << 4;
@@ -92,7 +95,7 @@ int main()
   //for(int i = 0; i < 1024*18; i++ )printf("%f\n", *(buffer+i));
   //printf("%f %f %f %f\n", myN, myN2, myN3, myN4);
   // terminate
-/*
+
   TH1F *ch0 = new TH1F("ch0","ch0",1024,0,1024);
   TH1F *ch1 = new TH1F("ch1","ch1",1024,0,1024);
   TH1F *ch2 = new TH1F("ch2","ch2",1024,0,1024);
@@ -114,11 +117,11 @@ int main()
   TH1F *ch15 = new TH1F("ch15","ch15",1024,0,1024);
 
   TH1F *tr1 = new TH1F("tr1","tr1",1024,0,1024);	
-*/
+
   double x;
   int ctr = 1;
-  //x = *(buffer+ctr);
-/*  
+  x = *(buffer+ctr);
+  
   while(ctr>0 && ctr<1024+1) { x = *(buffer+ctr); ch0->SetBinContent(ctr,x); ctr++;}
 	    while(ctr>1024 && ctr<1024*2+1) { x = *(buffer+ctr); ch1->SetBinContent(ctr-1024,x); ctr++;}
 	    while(ctr>1024*2 && ctr<1024*3+1) { x = *(buffer+ctr); ch2->SetBinContent(ctr-1024*2,x); ctr++;}
@@ -140,7 +143,7 @@ int main()
 	    while(ctr>1024*16 && ctr<1024*17+1) { x = *(buffer+ctr); ch15->SetBinContent(ctr-1024*16,x); ctr++;}
 	
 	    while(ctr>1024*17 && ctr<1024*18+1) { tr1->SetBinContent(ctr-1024*17,x); ctr++;}
-*/
+
   tree->Write();
   f->Write();
   f->Close();

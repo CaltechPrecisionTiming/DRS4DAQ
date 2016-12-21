@@ -37,8 +37,8 @@ int main()
 
   int event;
   float time[2][1024];
-  short raw[18][1024];
-  short channel[18][1024];
+  float raw[18][1024];
+  float channel[18][1024];
   float channelCorrected[18][1024];
 
   tree->Branch("event", &event, "event/I");
@@ -68,8 +68,10 @@ int main()
 		time[1][i] = i*0.2;
  		for(int j = 0; j < 18; j++)
 		{
-		  channel[j][i] = buffer[i+6+j*1024];
+		   //channel[j][i] = buffer[i+6+j*1024];
 		  raw[j][i] = buffer[i+6+j*1024];
+		  channel[j][i] = ( raw[j][i] - 2047 )/4096 ;
+		  std::cout << "i = " << i << " ; j = " << j << " ; raw[j][i] = " << raw[j][i] << " ; channel[j][i] = " << channel[j][i] << std::endl; 
 		}
 	    }
 	  tree->Fill();	

@@ -42,8 +42,8 @@ int main()
   float channelCorrected[18][1024];
 
   tree->Branch("event", &event, "event/I");
-  tree->Branch("raw", raw, "raw[18][1024]/S");   
-  tree->Branch("channel", channel, "channel[18][1024]/S");
+  tree->Branch("raw", raw, "raw[18][1024]/F");   
+  tree->Branch("channel", channel, "channel[18][1024]/F");
   tree->Branch("time", time, "time[2][1024]/F");
 
   int  event_size = 73752;
@@ -56,6 +56,7 @@ int main()
   event = 0;
   for( int ievent = 0; ievent < nevents; ievent++)
     {
+      if ( ievent % 1000 == 0 ) std::cout << "[INFO]: processing event #" << ievent << std::endl;
   	// copy the file into the buffer:
 	  result = fread (buffer,1,event_size,pFile);
 	  //std::cout << result << " " << ievent  << std::endl;
@@ -70,7 +71,7 @@ int main()
 		{
 		   //channel[j][i] = buffer[i+6+j*1024];
 		  raw[j][i] = buffer[i+6+j*1024];
-		  channel[j][i] = ( raw[j][i] - 2047 )/4096 ;
+		  channel[j][i] = ( raw[j][i] - 2047. )/4096. ;//converting to volts [V]
 		  //std::cout << "i = " << i << " ; j = " << j << " ; raw[j][i] = " << raw[j][i] << " ; channel[j][i] = " << channel[j][i] << std::endl; 
 		}
 	    }

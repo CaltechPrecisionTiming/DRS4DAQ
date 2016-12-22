@@ -146,49 +146,49 @@ int main()
   float* buffer1;
   buffer1 = buffer + 6 ;  
 
-  while(ctr>0 && ctr<1024+1) { x = *(buffer1+ctr); ch0->SetBinContent(ctr,x);  y = (x-2047)/4096 ;  channel0->SetBinContent(ctr,y);  ctr++;}
-  while(ctr>1024 && ctr<1024*2+1) { x = *(buffer1+ctr); ch1->SetBinContent(ctr-1024,x);  y = (x-2047)/4096 ;  channel1->SetBinContent(ctr,y);  ctr++;}
-  while(ctr>1024*2 && ctr<1024*3+1) { x = *(buffer1+ctr); ch2->SetBinContent(ctr-1024*2,x);  y = (x-2047)/4096 ;  channel2->SetBinContent(ctr,y); ctr++;}
-  while(ctr>1024*3 && ctr<1024*4+1) { x = *(buffer1+ctr); ch3->SetBinContent(ctr-1024*3,x);  y = (x-2047)/4096 ;  channel3->SetBinContent(ctr,y); ctr++;}
-  while(ctr>1024*4 && ctr<1024*5+1) { x = *(buffer1+ctr); ch4->SetBinContent(ctr-1024*4,x);  y = (x-2047)/4096 ;  channel4->SetBinContent(ctr,y);  ctr++;}
-  while(ctr>1024*5 && ctr<1024*6+1) { x = *(buffer1+ctr); ch5->SetBinContent(ctr-1024*5,x);  y = (x-2047)/4096 ;  channel5->SetBinContent(ctr,y);  ctr++;}
-  while(ctr>1024*6 && ctr<1024*7+1) { x = *(buffer1+ctr); ch6->SetBinContent(ctr-1024*6,x);  y = (x-2047)/4096 ;  channel6->SetBinContent(ctr,y);  ctr++;}
-  while(ctr>1024*7 && ctr<1024*8+1) { x = *(buffer1+ctr); ch7->SetBinContent(ctr-1024*7,x);  y = (x-2047)/4096 ;  channel7->SetBinContent(ctr,y);  ctr++;}
+  while(ctr>0 && ctr<1024+1) { x = *(buffer+6+ctr); ch0->SetBinContent(ctr,x);  y = (x-2047)/4096 ;  channel0->SetBinContent(ctr,y);  ctr++;}
+  while(ctr>1024 && ctr<1024*2+1) { x = *(buffer+6+ctr); ch1->SetBinContent(ctr-1024,x);  y = (x-2047)/4096 ;  channel1->SetBinContent(ctr-1024,y);  ctr++;}
+  while(ctr>1024*2 && ctr<1024*3+1) { x = *(buffer+6+ctr); ch2->SetBinContent(ctr-1024*2,x);  y = (x-2047)/4096 ;  channel2->SetBinContent(ctr-1024*2,y); ctr++;}
+  while(ctr>1024*3 && ctr<1024*4+1) { x = *(buffer+6+ctr); ch3->SetBinContent(ctr-1024*3,x);  y = (x-2047)/4096 ;  channel3->SetBinContent(ctr-1024*3,y); ctr++;}
+  while(ctr>1024*4 && ctr<1024*5+1) { x = *(buffer+6+ctr); ch4->SetBinContent(ctr-1024*4,x);  y = (x-2047)/4096 ;  channel4->SetBinContent(ctr-1024*4,y);  ctr++;}
+  while(ctr>1024*5 && ctr<1024*6+1) { x = *(buffer+6+ctr); ch5->SetBinContent(ctr-1024*5,x);  y = (x-2047)/4096 ;  channel5->SetBinContent(ctr-1024*5,y);  ctr++;}
+  while(ctr>1024*6 && ctr<1024*7+1) { x = *(buffer+6+ctr); ch6->SetBinContent(ctr-1024*6,x);  y = (x-2047)/4096 ;  channel6->SetBinContent(ctr-1024*6,y);  ctr++;}
+  while(ctr>1024*7 && ctr<1024*8+1) { x = *(buffer+6+ctr); ch7->SetBinContent(ctr-1024*7,x);  y = (x-2047)/4096 ;  channel7->SetBinContent(ctr-1024*7,y);  ctr++;}
 
-  while(ctr>1024*8 && ctr<1024*9+1) { x = *(buffer1+ctr); tr0->SetBinContent(ctr-1024*8,x);  y = (x-2047)/4096 ;  channel8->SetBinContent(ctr,y);  ctr++;}
+  while(ctr>1024*8 && ctr<1024*9+1) { x = *(buffer+6+ctr); tr0->SetBinContent(ctr-1024*8,x);  y = (x-2047)/4096 ;  channel8->SetBinContent(ctr-1024*8,y);  ctr++;}
 
-  while(ctr>1024*9 && ctr<1024*10+1) { x = *(buffer1+ctr); ch8->SetBinContent(ctr-1024*9,x);  y = (x-2047)/4096 ;  channel9->SetBinContent(ctr,y);  ctr++;}
-  while(ctr>1024*10 && ctr<1024*11+1) { x = *(buffer1+ctr); ch9->SetBinContent(ctr-1024*10,x);  y = (x-2047)/4096 ;  channel10->SetBinContent(ctr,y);  ctr++;}
-  while(ctr>1024*11 && ctr<1024*12+1) { x = *(buffer1+ctr); ch10->SetBinContent(ctr-1024*11,x);  y = (x-2047)/4096 ;  channel11->SetBinContent(ctr,y);  ctr++;}
-  while(ctr>1024*12 && ctr<1024*13+1) { x = *(buffer1+ctr); ch11->SetBinContent(ctr-1024*12,x);  y = (x-2047)/4096 ;  channel12->SetBinContent(ctr,y);  ctr++;}
-  while(ctr>1024*13 && ctr<1024*14+1) { x = *(buffer1+ctr); ch12->SetBinContent(ctr-1024*13,x);  y = (x-2047)/4096 ;  channel13->SetBinContent(ctr,y);  ctr++;}
-  while(ctr>1024*14 && ctr<1024*15+1) { x = *(buffer1+ctr); ch13->SetBinContent(ctr-1024*14,x);  y = (x-2047)/4096 ;  channel14->SetBinContent(ctr,y);  ctr++;}
-  while(ctr>1024*15 && ctr<1024*16+1) { x = *(buffer1+ctr); ch14->SetBinContent(ctr-1024*15,x);  y = (x-2047)/4096 ;  channel15->SetBinContent(ctr,y);  ctr++;}
-  while(ctr>1024*16 && ctr<1024*17+1) { x = *(buffer1+ctr); ch15->SetBinContent(ctr-1024*16,x);  y = (x-2047)/4096 ;  channel16->SetBinContent(ctr,y);  ctr++;}
+  while(ctr>1024*9 && ctr<1024*10+1) { x = *(buffer+6+ctr); ch8->SetBinContent(ctr-1024*9,x);  y = (x-2047)/4096 ;  channel9->SetBinContent(ctr-1024*9,y);  ctr++;}
+  while(ctr>1024*10 && ctr<1024*11+1) { x = *(buffer+6+ctr); ch9->SetBinContent(ctr-1024*10,x);  y = (x-2047)/4096 ;  channel10->SetBinContent(ctr-1024*10,y);  ctr++;}
+  while(ctr>1024*11 && ctr<1024*12+1) { x = *(buffer+6+ctr); ch10->SetBinContent(ctr-1024*11,x);  y = (x-2047)/4096 ;  channel11->SetBinContent(ctr-1024*11,y);  ctr++;}
+  while(ctr>1024*12 && ctr<1024*13+1) { x = *(buffer+6+ctr); ch11->SetBinContent(ctr-1024*12,x);  y = (x-2047)/4096 ;  channel12->SetBinContent(ctr-1024*12,y);  ctr++;}
+  while(ctr>1024*13 && ctr<1024*14+1) { x = *(buffer+6+ctr); ch12->SetBinContent(ctr-1024*13,x);  y = (x-2047)/4096 ;  channel13->SetBinContent(ctr-1024*13,y);  ctr++;}
+  while(ctr>1024*14 && ctr<1024*15+1) { x = *(buffer+6+ctr); ch13->SetBinContent(ctr-1024*14,x);  y = (x-2047)/4096 ;  channel14->SetBinContent(ctr-1024*14,y);  ctr++;}
+  while(ctr>1024*15 && ctr<1024*16+1) { x = *(buffer+6+ctr); ch14->SetBinContent(ctr-1024*15,x);  y = (x-2047)/4096 ;  channel15->SetBinContent(ctr-1024*15,y);  ctr++;}
+  while(ctr>1024*16 && ctr<1024*17+1) { x = *(buffer+6+ctr); ch15->SetBinContent(ctr-1024*16,x);  y = (x-2047)/4096 ;  channel16->SetBinContent(ctr-1024*16,y);  ctr++;}
 
-  while(ctr>1024*17 && ctr<1024*18+1) { x = *(buffer1+ctr); tr1->SetBinContent(ctr-1024*17,x);  y = (x-2047)/4096 ;  channel17->SetBinContent(ctr,y);  ctr++;}
-/* 
-  while(ctr>0 && ctr<1024+1) { x = *(buffer+ctr); ctr++;}
-  while(ctr>1024 && ctr<1024*2+1) { x = *(buffer+ctr); ch1->SetBinContent(ctr-1024,x); ctr++;}
-  while(ctr>1024*2 && ctr<1024*3+1) { x = *(buffer+ctr); ch2->SetBinContent(ctr-1024*2,x); ctr++;}
-  while(ctr>1024*3 && ctr<1024*4+1) { x = *(buffer+ctr); ch3->SetBinContent(ctr-1024*3,x); ctr++;}
-  while(ctr>1024*4 && ctr<1024*5+1) { x = *(buffer+ctr); ch4->SetBinContent(ctr-1024*4,x); ctr++;}
-  while(ctr>1024*5 && ctr<1024*6+1) { x = *(buffer+ctr); ch5->SetBinContent(ctr-1024*5,x); ctr++;}
-  while(ctr>1024*6 && ctr<1024*7+1) { x = *(buffer+ctr); ch6->SetBinContent(ctr-1024*6,x); ctr++;}
-  while(ctr>1024*7 && ctr<1024*8+1) { x = *(buffer+ctr); ch7->SetBinContent(ctr-1024*7,x); ctr++;}
+  while(ctr>1024*17 && ctr<1024*18+1) { x = *(buffer+6+ctr); tr1->SetBinContent(ctr-1024*17,x);  y = (x-2047)/4096 ;  channel17->SetBinContent(ctr-1024*17,y);  ctr++;}
+/*
+  while(ctr>0 && ctr<1024+1) { x = *(buffer+6+ctr); ch0->SetBinContent(ctr,x);  ctr++;}
+  while(ctr>1024 && ctr<1024*2+1) { x = *(buffer+6+ctr); ch1->SetBinContent(ctr-1024,x); ctr++;}
+  while(ctr>1024*2 && ctr<1024*3+1) { x = *(buffer+6+ctr); ch2->SetBinContent(ctr-1024*2,x); ctr++;}
+  while(ctr>1024*3 && ctr<1024*4+1) { x = *(buffer+6+ctr); ch3->SetBinContent(ctr-1024*3,x); ctr++;}
+  while(ctr>1024*4 && ctr<1024*5+1) { x = *(buffer+6+ctr); ch4->SetBinContent(ctr-1024*4,x); ctr++;}
+  while(ctr>1024*5 && ctr<1024*6+1) { x = *(buffer+6+ctr); ch5->SetBinContent(ctr-1024*5,x); ctr++;}
+  while(ctr>1024*6 && ctr<1024*7+1) { x = *(buffer+6+ctr); ch6->SetBinContent(ctr-1024*6,x); ctr++;}
+  while(ctr>1024*7 && ctr<1024*8+1) { x = *(buffer+6+ctr); ch7->SetBinContent(ctr-1024*7,x); ctr++;}
 		
-  while(ctr>1024*8 && ctr<1024*9+1) { x = *(buffer+ctr); tr0->SetBinContent(ctr-1024*8,x); ctr++;}
+  while(ctr>1024*8 && ctr<1024*9+1) { x = *(buffer+6+ctr); tr0->SetBinContent(ctr-1024*8,x); ctr++;}
 
-  while(ctr>1024*9 && ctr<1024*10+1) { x = *(buffer+ctr); ch8->SetBinContent(ctr-1024*9,x); ctr++;}
-  while(ctr>1024*10 && ctr<1024*11+1) { x = *(buffer+ctr); ch9->SetBinContent(ctr-1024*10,x); ctr++;}
-  while(ctr>1024*11 && ctr<1024*12+1) { x = *(buffer+ctr); ch10->SetBinContent(ctr-1024*11,x); ctr++;}
-  while(ctr>1024*12 && ctr<1024*13+1) { x = *(buffer+ctr); ch11->SetBinContent(ctr-1024*12,x); ctr++;}
-  while(ctr>1024*13 && ctr<1024*14+1) { x = *(buffer+ctr); ch12->SetBinContent(ctr-1024*13,x); ctr++;}
-  while(ctr>1024*14 && ctr<1024*15+1) { x = *(buffer+ctr); ch13->SetBinContent(ctr-1024*14,x); ctr++;} 
-  while(ctr>1024*15 && ctr<1024*16+1) { x = *(buffer+ctr); ch14->SetBinContent(ctr-1024*15,x); ctr++;}
-  while(ctr>1024*16 && ctr<1024*17+1) { x = *(buffer+ctr); ch15->SetBinContent(ctr-1024*16,x); ctr++;}
+  while(ctr>1024*9 && ctr<1024*10+1) { x = *(buffer+6+ctr); ch8->SetBinContent(ctr-1024*9,x); ctr++;}
+  while(ctr>1024*10 && ctr<1024*11+1) { x = *(buffer+6+ctr); ch9->SetBinContent(ctr-1024*10,x); ctr++;}
+  while(ctr>1024*11 && ctr<1024*12+1) { x = *(buffer+6+ctr); ch10->SetBinContent(ctr-1024*11,x); ctr++;}
+  while(ctr>1024*12 && ctr<1024*13+1) { x = *(buffer+6+ctr); ch11->SetBinContent(ctr-1024*12,x); ctr++;}
+  while(ctr>1024*13 && ctr<1024*14+1) { x = *(buffer+6+ctr); ch12->SetBinContent(ctr-1024*13,x); ctr++;}
+  while(ctr>1024*14 && ctr<1024*15+1) { x = *(buffer+6+ctr); ch13->SetBinContent(ctr-1024*14,x); ctr++;} 
+  while(ctr>1024*15 && ctr<1024*16+1) { x = *(buffer+6+ctr); ch14->SetBinContent(ctr-1024*15,x); ctr++;}
+  while(ctr>1024*16 && ctr<1024*17+1) { x = *(buffer+6+ctr); ch15->SetBinContent(ctr-1024*16,x); ctr++;}
 	
-  while(ctr>1024*17 && ctr<1024*18+1) { x = *(buffer+ctr); tr1->SetBinContent(ctr-1024*17,x); ctr++;}
+  while(ctr>1024*17 && ctr<1024*18+1) { x = *(buffer+6+ctr); tr1->SetBinContent(ctr-1024*17,x); ctr++;}
 */
   tree->Write();
   f->Write();

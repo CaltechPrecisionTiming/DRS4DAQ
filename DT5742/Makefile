@@ -20,7 +20,7 @@ OBJ = $(SRC:.cc=.o)
 OBJ1 = $(SRC1:.cc=.o)
 OBJ2 = $(SRC2:.cc=.o)
 
-all : $(TARGET) $(TARGET1 $(TARGET2))
+all : $(TARGET) $(TARGET1) $(TARGET2)
 
 
 $(TARGET) : $(OBJ)

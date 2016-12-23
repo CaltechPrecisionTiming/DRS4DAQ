@@ -10,14 +10,17 @@ CPPFLAGS += -g
 
 TARGET = testDigitizer
 TARGET1 = testBinary
+TARGET2 = dat2rootCP
 
 SRC = testDigitizer.cc
 SRC1 = testBinary.cc
+SRC2 = testBinary.cc src/Aux.cc
 
 OBJ = $(SRC:.cc=.o)
 OBJ1 = $(SRC1:.cc=.o)
+OBJ2 = $(SRC2:.cc=.o)
 
-all : $(TARGET) $(TARGET1)
+all : $(TARGET) $(TARGET1 $(TARGET2))
 
 
 $(TARGET) : $(OBJ)
@@ -32,10 +35,16 @@ $(TARGET1) : $(OBJ1)
 	@echo $<
 	@echo $^
 
+$(TARGET2) : $(OBJ2)
+	$(LD) $(CPPFLAGS) -o $(TARGET2) $(OBJ2) $(LDFLAGS)
+	@echo $@
+	@echo $<
+	@echo $^
+
 %.o : %.cc	
 	$(CXX) $(CPPFLAGS) -o $@ -c $<
 	@echo $@	
 	@echo $<
 clean :
-	rm -f *.o src/*.o $(TARGET) $(TARGET1) *~
+	rm -f *.o src/*.o $(TARGET) $(TARGET1) $(TARGET2) *~
 

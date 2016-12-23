@@ -1051,10 +1051,20 @@ int main(int argc, char *argv[])
     /* *************************************************************************************** */
     memset(&WDrun, 0, sizeof(WDrun));
     memset(&WDcfg, 0, sizeof(WDcfg));
-    if (argc > 1)
+/*    if (argc > 1)
         strcpy(ConfigFileName, argv[1]);
     else
         strcpy(ConfigFileName, DEFAULT_CONFIG_FILE);
+*/
+    if (argc == 0)
+        strcpy(ConfigFileName, DEFAULT_CONFIG_FILE);
+    else
+	{
+	  if ( argc >2 )
+	  	strcpy(ConfigFileName, argv[1] , argv[2] );
+	  else
+         	strcpy(ConfigFileName, argv[1]);
+	}
 
     printf("Opening Configuration File %s\n", ConfigFileName);
     f_ini = fopen(ConfigFileName, "r");

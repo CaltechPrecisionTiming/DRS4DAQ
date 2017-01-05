@@ -32,7 +32,7 @@ int main()
   if (buffer == NULL) {fputs ("Memory error\n",stderr); exit (2);}
   
   //define the ouput root file and tree
-  TFile *f = new TFile("Out_put.root","recreate");
+  TFile *f = new TFile("output.root","recreate");
   TTree *tree = new TTree("Tree","Tree");
 
   int event;

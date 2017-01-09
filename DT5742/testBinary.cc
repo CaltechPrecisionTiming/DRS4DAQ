@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "Aux.hh"
 int main()
 {
   FILE* pFile;
@@ -40,6 +41,7 @@ int main()
   float raw[18][1024];
   float channel[18][1024];
   float channelCorrected[18][1024];
+  float base[18];
 
   tree->Branch("event", &event, "event/I");
   tree->Branch("raw", raw, "raw[18][1024]/F");   

@@ -17,7 +17,7 @@ TARGET4 = dat2rootJM
 SRC = testDigitizer.cc
 SRC1 = testBinary.cc
 SRC2 = testBinary.cc src/Aux.cc
-SRC3 = testAnalysis.cc 
+SRC3 = testAnalysis.cc src/Aux.cc 
 SRC4 = testAnalysis.cc src/Aux.cc
 
 OBJ = $(SRC:.cc=.o)

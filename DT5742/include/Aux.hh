@@ -28,7 +28,7 @@ float RisingEdgeFitTime(TGraphErrors * pulse, const float index_min, const float
 void RisingEdgeFitTime(TGraphErrors * pulse, const float index_min, float* tstamp, TString fname, bool makePlot = false );
 float GausFit_MeanTime(TGraphErrors* pulse, const float index_first, const float index_last, TString fname);
 float GetBaseline( int peak, short *a );
-float GetBaseline( int peak, float *a );
+float GetBaseline( int peak, float *b );
 float GetPulseIntegral(int peak, short *a);
 
 #endif

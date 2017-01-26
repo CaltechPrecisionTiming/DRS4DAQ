@@ -90,7 +90,8 @@ int FindMin( int n, float *a) {
   float xmin = a[5];
   int loc = 0;
   for  (int i = 5; i < n-5; i++) {
-    if (xmin > a[i] && a[i+1] < 0.5*a[i])  {
+    //if (xmin > a[i] && a[i+1] < 0.5*a[i])  {
+    if (xmin > a[i])  {
       xmin = a[i];
       loc = i;
     }
@@ -248,7 +249,7 @@ float GetBaseline( int peak, float *a ) {
   float tmpsum = 0;
   float tmpcount = 0;
   //std::cout << "GGG\n";
-  if (peak < 300) {
+  if (peak < 100) {
     for  (int i = peak + 200; i < 1000; i++) {
       // std::cout << i << " : " << a[i] << "\n";
       tmpsum += a[i];

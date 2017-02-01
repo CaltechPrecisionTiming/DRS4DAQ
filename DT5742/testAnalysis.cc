@@ -16,8 +16,20 @@
 //LOCAL INCLUDES
 #include "Aux.hh"
 
-int main()
+int main(char **argv)
 {
+
+
+  bool drawDebugPulses = false;
+  drawDebugPulses = true;
+  /*  std::string _drawDebugPulses = ParseCommandLine( argv, "--debug" );
+  bool drawDebugPulses = false;
+  if ( _drawDebugPulses == "yes" ) {
+    drawDebugPulses = true;
+    std::cout << "draw: " << drawDebugPulses << std::endl;
+  }
+*/
+
   FILE* pFile;
   long lSize;
   float* buffer;
@@ -48,6 +60,12 @@ int main()
   float channelCorrected[18][1024];
   float base[18];
   int baseindex[18];
+  float gauspeak[18];
+  float linearTime0[18];
+  float linearTime15[18];
+  float linearTime30[18];
+  float linearTime45[18];
+  float linearTime60[18];
 
   tree->Branch("event", &event, "event/I");
   tree->Branch("bin", bin, "bin[1024]/I");   
@@ -57,6 +75,12 @@ int main()
   tree->Branch("time", time, "time[2][1024]/F");
   tree->Branch("base", base, "base[18]/F");
   tree->Branch("baseindex", baseindex, "baseindex[18]/I");
+  tree->Branch("gauspeak", gauspeak, "gauspeak[18]/F");
+  tree->Branch("linearTime0", linearTime0, "linearTime0[18]/F");
+  tree->Branch("linearTime15", linearTime15, "linearTime15[18]/F");
+  tree->Branch("linearTime30", linearTime30, "linearTime30[18]/F");
+  tree->Branch("linearTime45", linearTime45, "linearTime45[18]/F");
+  tree->Branch("linearTime60", linearTime60, "linearTime60[18]/F");
 
   int  event_size = 73752;
   int nevents = lSize/event_size;
@@ -117,19 +141,44 @@ int main()
 
 		//Gauss Time-Stamping 
 		double min = 0.; double low_edge =0.; double high_edge =0.; double y = 0.; 
-		//min = pulse->GetErrorX(index_min);	
-		//low_edge = pulse->GetErrorX(index_min-3); // get the time of the low edge of the fit range
-		//high_edge = pulse->GetErrorX(index_min+3);  // get the time of the upper edge of the fit range	
-	  	//if(j==0) std::cout << " min =  " << min << " low = " << low_edge << "high = " << high_edge << std::endl;
 		pulse->GetPoint(index_min, min, y);	
 		pulse->GetPoint(index_min-3, low_edge, y); // get the time of the low edge of the fit range
 		pulse->GetPoint(index_min+3, high_edge, y);  // get the time of the upper edge of the fit range	
 
 			
 		float timepeak = 0.;
-		timepeak = GausFit_MeanTime(pulse, low_edge, high_edge);
-		//timepeak = GausFit_MeanTime(pulse, low_edge, high_edge,pulseName);
-	  	if(j==0) std::cout <<  " timepeak  =  " << timepeak  << std::endl;
+		float timecf0   = 0;
+		float timecf15   = 0;
+		float timecf30   = 0;
+		float timecf45   = 0;
+		float timecf60   = 0;
+		if( drawDebugPulses) {
+			std::cout << "draw -->" << pulseName << std::endl;
+			timepeak =  GausFit_MeanTime(pulse, low_edge, high_edge, pulseName); // get the time stamp
+			float fs[5];
+			RisingEdgeFitTime( pulse, index_min, fs, "linearFit_" + pulseName, true);
+			timecf0  = fs[0];
+			timecf15 = fs[1];
+			timecf30 = fs[2];
+			timecf45 = fs[3];
+			timecf60 = fs[4];
+	 	} else{
+			timepeak =  GausFit_MeanTime(pulse, low_edge, high_edge); // get the time stamp
+	  		float fs[5];
+	  		RisingEdgeFitTime( pulse, index_min, fs, "");
+	  		timecf0  = fs[0];
+			timecf15 = fs[1];
+			timecf30 = fs[2];
+			timecf45 = fs[3];
+			timecf60 = fs[4];
+		}
+		gauspeak[j]   = timepeak;
+		linearTime0[j] = timecf0;
+		linearTime15[j] = timecf15;
+		linearTime30[j] = timecf30;
+		linearTime45[j] = timecf45;
+		linearTime60[j] = timecf60; 
+	 // 	if(j==0) std::cout <<  " timepeak  =  " << timepeak  << std::endl;
 
 	    }
 	  	/*std::cout <<  "event =  " << event  << std::endl;

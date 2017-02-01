@@ -11,22 +11,19 @@ CPPFLAGS += -g
 TARGET = testDigitizer
 TARGET1 = testBinary
 TARGET2 = dat2rootCP
-TARGET3 = testAnalysis
 TARGET4 = dat2rootJM
 
 SRC = testDigitizer.cc
 SRC1 = testBinary.cc
 SRC2 = testBinary.cc src/Aux.cc
-SRC3 = testAnalysis.cc src/Aux.cc 
 SRC4 = testAnalysis.cc src/Aux.cc
 
 OBJ = $(SRC:.cc=.o)
 OBJ1 = $(SRC1:.cc=.o)
 OBJ2 = $(SRC2:.cc=.o)
-OBJ3 = $(SRC3:.cc=.o)
 OBJ4 = $(SRC4:.cc=.o)
 
-all : $(TARGET) $(TARGET1) $(TARGET2) $(TARGET3) $(TARGET4)
+all : $(TARGET) $(TARGET1) $(TARGET2)  $(TARGET4)
 
 
 $(TARGET) : $(OBJ)
@@ -47,12 +44,6 @@ $(TARGET2) : $(OBJ2)
 	@echo $<
 	@echo $^
 
-$(TARGET3) : $(OBJ3)
-	$(LD) $(CPPFLAGS) -o $(TARGET3) $(OBJ3) $(LDFLAGS)
-	@echo $@
-	@echo $<
-	@echo $^
-
 $(TARGET4) : $(OBJ4)
 	$(LD) $(CPPFLAGS) -o $(TARGET4) $(OBJ4) $(LDFLAGS)
 	@echo $@
@@ -65,5 +56,5 @@ $(TARGET4) : $(OBJ4)
 	@echo $@	
 	@echo $<
 clean :
-	rm -f *.o src/*.o $(TARGET) $(TARGET1) $(TARGET2) $(TARGET3) $(TARGET4) *~
+	rm -f *.o src/*.o $(TARGET) $(TARGET1) $(TARGET2)  $(TARGET4) *~
 

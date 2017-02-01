@@ -122,8 +122,8 @@ float GausFit_MeanTime(TGraphErrors* pulse, const float index_first, const float
     {
       if ( yy[i] > max ) max = yy[i];
     }
-  //std::cout << "max: " << max << std::endl;
-  if( max < 42 || index_first < 10 || index_last > 1010 ) return -99999;
+  std::cout << "max: " << max << std::endl;
+  if( max < 0.005 || index_first < 10 || index_last > 1010 ) return -99999;
   pulse->Fit("fpeak","Q","", index_first, index_last);
   
   TCanvas* c = new TCanvas("canvas","canvas",800,400) ;
@@ -187,7 +187,7 @@ void RisingEdgeFitTime(TGraphErrors * pulse, const float index_min, float* tstam
       if ( yy[i] > max ) max = yy[i];
     }
   //std::cout << "max: " << max << std::endl;
-  if( max < 42 || index_min < 10 || index_min > 1010 ) return;
+  if( max < 0.005 || index_min < 10 || index_min > 1010 ) return;
   
   pulse->Fit("flinear","Q","", x_low, x_high );
   double slope = flinear->GetParameter(0);

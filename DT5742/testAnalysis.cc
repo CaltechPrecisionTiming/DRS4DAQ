@@ -91,7 +91,7 @@ int main(int argc, char **argv)
   tree->Branch("deltat", &deltat, "deltat/F");
   tree->Branch("time_resolution", &time_resolution, "time_resolution/F");
 
-  TH1F *dt = new TH1F ("dt","deltat",1000,0,0.1);
+  TH1F *dt = new TH1F ("dt","deltat",100,0,0.1);
   int  event_size = 73752;
   int nevents = lSize/event_size;
 
@@ -127,7 +127,7 @@ int main(int argc, char **argv)
 	    { 
 		//Find Peak Location
         	int index_min = FindMin (1024, channel[j]); // return index of the min     
-	  	if(j==0) std::cout << j <<  " index_min =  " << index_min  << std::endl;
+	  	//if(j==0) std::cout << j <<  " index_min =  " << index_min  << std::endl;
 		baseindex[j] = index_min;
         	//int index_minraw = FindMin (1024, raw[j]); // return index of the min     
 	  	//std::cout << j <<  " index_minraw =  " << index_minraw  << std::endl;
@@ -165,10 +165,10 @@ int main(int argc, char **argv)
 		float timecf45   = 0;
 		float timecf60   = 0;
 		if( drawDebugPulses) {
-			std::cout << "draw -->" << pulseName << std::endl;
+		  //std::cout << "draw -->" << pulseName << std::endl;
 			timepeak =  GausFit_MeanTime(pulse, low_edge, high_edge, pulseName); // get the time stamp
 			float fs[5];
-			RisingEdgeFitTime( pulse, index_min, fs, "linearFit_" + pulseName, true);
+			RisingEdgeFitTime( pulse, index_min, fs, "linearFit_" + pulseName, false);
 			timecf0  = fs[0];
 			timecf15 = fs[1];
 			timecf30 = fs[2];
@@ -211,19 +211,21 @@ int main(int argc, char **argv)
 	  event++;
      }
     
-     gStyle->SetOptStat(111111); 
-     TF1* fpeak = new TF1("fpeak","gaus", 0.02 , 0.035);
-     fpeak->SetParameter(1,0.025);
-     dt->Fit("fpeak","","R", 0.02 , 0.035);
+  //gStyle->SetOptStat(111111); 
+  gStyle->SetOptFit();
+  TF1* fpeak = new TF1("fpeak","gaus", 0.02 , 0.035);
+  //fpeak->SetParameter(1,0.025);
+  
      TCanvas* c = new TCanvas("canvas","canvas",800,400) ;
      time_resolution = fpeak->GetParameter(2);
-     dt->GetXaxis()->SetLimits(0.01,0.06);
+     //dt->GetXaxis()->SetLimits(0.01,0.06);
      //dt->GetYaxis()->SetRangeUser(0,100);
      //dt->SetMarkerSize(1);
      //dt->SetMarkerStyle(20);
-     dt->Draw("AP");
-     fpeak->Draw("SAME");
-     fpeak->SetLineColor(2);
+     dt->Fit( fpeak,"","R");
+     dt->Draw();
+     //fpeak->Draw("SAME");
+     //fpeak->SetLineColor(2);
      c->SaveAs("time_resolution.pdf");
      delete fpeak;
 

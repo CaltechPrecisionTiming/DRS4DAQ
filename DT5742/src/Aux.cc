@@ -122,7 +122,7 @@ float GausFit_MeanTime(TGraphErrors* pulse, const float index_first, const float
     {
       if ( yy[i] > max ) max = yy[i];
     }
-  std::cout << "max: " << max << std::endl;
+  //std::cout << "max: " << max << std::endl;
   if( max < 0.005 || index_first < 10 || index_last > 1010 ) return -99999;
   pulse->Fit("fpeak","Q","", index_first, index_last);
   
@@ -132,7 +132,7 @@ float GausFit_MeanTime(TGraphErrors* pulse, const float index_first, const float
   pulse->SetMarkerSize(1);
   pulse->SetMarkerStyle(20);
   pulse->Draw("AP");
-  c->SaveAs(fname+".pdf");
+  //c->SaveAs(fname+".pdf");
   delete fpeak;
   
   return timepeak;
@@ -172,6 +172,8 @@ float RisingEdgeFitTime(TGraphErrors * pulse, const float index_min, const float
 void RisingEdgeFitTime(TGraphErrors * pulse, const float index_min, float* tstamp, TString fname, bool makePlot )
 {
   double x_low, x_high, y, dummy;
+  //pulse->GetPoint(index_min-5, x_low, y);
+  //pulse->GetPoint(index_min-1, x_high, y);
   pulse->GetPoint(index_min-6, x_low, y);
   pulse->GetPoint(index_min-2, x_high, y);
   //pulse->GetPoint(index_min-12, x_low, y);
@@ -187,7 +189,7 @@ void RisingEdgeFitTime(TGraphErrors * pulse, const float index_min, float* tstam
       if ( yy[i] > max ) max = yy[i];
     }
   //std::cout << "max: " << max << std::endl;
-  if( max < 0.005 || index_min < 10 || index_min > 1010 ) return;
+  if( max < 0.0005 || index_min < 10 || index_min > 1010 ) return;
   
   pulse->Fit("flinear","Q","", x_low, x_high );
   double slope = flinear->GetParameter(0);
@@ -201,7 +203,7 @@ void RisingEdgeFitTime(TGraphErrors * pulse, const float index_min, float* tstam
       pulse->SetMarkerSize(1);
       pulse->SetMarkerStyle(20);
       pulse->Draw("AP");
-      c->SaveAs(fname+"LinearFit.pdf");
+      //c->SaveAs(fname+"LinearFit.pdf");
       //delete c;
     }
   tstamp[0] = (0.0*y-b)/slope;
@@ -351,3 +353,8 @@ TGraphErrors* GetTGraphFilter( short* channel, float* time, TString pulseName, b
   return tg;
 };
 
+
+float GetTimeResolution( float deltat)
+{
+  return 0;
+};

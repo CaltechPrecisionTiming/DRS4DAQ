@@ -30,5 +30,6 @@ float GausFit_MeanTime(TGraphErrors* pulse, const float index_first, const float
 float GetBaseline( int peak, short *a );
 float GetBaseline( int peak, float *b );
 float GetPulseIntegral(int peak, short *a);
+float GetTimeResolution( float deltat );
 
 #endif

@@ -12,6 +12,11 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
+#include <RooRealVar.h>
+#include <RooPlot.h>
+#include <RooDataSet.h>
+#include <RooGaussian.h>
+#include <TStyle.h>
 
 //LOCAL INCLUDES
 #include "Aux.hh"
@@ -66,6 +71,8 @@ int main(char **argv)
   float linearTime30[18];
   float linearTime45[18];
   float linearTime60[18];
+  float deltat;
+  float time_resolution;
 
   tree->Branch("event", &event, "event/I");
   tree->Branch("bin", bin, "bin[1024]/I");   
@@ -81,9 +88,14 @@ int main(char **argv)
   tree->Branch("linearTime30", linearTime30, "linearTime30[18]/F");
   tree->Branch("linearTime45", linearTime45, "linearTime45[18]/F");
   tree->Branch("linearTime60", linearTime60, "linearTime60[18]/F");
+  tree->Branch("deltat", &deltat, "deltat/F");
+  tree->Branch("time_resolution", &time_resolution, "time_resolution/F");
 
+  TH1F *dt = new TH1F ("dt","deltat",1000,0,0.1);
   int  event_size = 73752;
   int nevents = lSize/event_size;
+
+  float tmp=0;
 
   std::cout << "nevents: " << nevents << std::endl;
   //*************************
@@ -178,9 +190,12 @@ int main(char **argv)
 		linearTime30[j] = timecf30;
 		linearTime45[j] = timecf45;
 		linearTime60[j] = timecf60; 
-	 // 	if(j==0) std::cout <<  " timepeak  =  " << timepeak  << std::endl;
+	  	//if(j==0) std::cout <<  " timepeak  =  " << timepeak  << std::endl;
 
 	    }
+
+		deltat = gauspeak[0] - gauspeak[1];
+		if(deltat>tmp) tmp = deltat;
 	  	/*std::cout <<  "event =  " << event  << std::endl;
 	  	std::cout <<  "ch0: index_min =  " << baseindex[0]  << std::endl;
 	  	std::cout <<  " peak  =  " << channel[0][baseindex[0]]  << std::endl;
@@ -190,10 +205,66 @@ int main(char **argv)
 	  	std::cout <<  " base  =  " << base[8]  << std::endl;
 */
 
-	  tree->Fill();	
+	  if(deltat!=0) dt->Fill(deltat);
+	  if(deltat!=0) tree->Fill();	
+	  //tree->Fill();	
 	  event++;
      }
+    
+     gStyle->SetOptStat(111111); 
+     TF1* fpeak = new TF1("fpeak","gaus", 0.02 , 0.035);
+     fpeak->SetParameter(1,0.025);
+     dt->Fit("fpeak","","R", 0.02 , 0.035);
+     TCanvas* c = new TCanvas("canvas","canvas",800,400) ;
+     time_resolution = fpeak->GetParameter(2);
+     dt->GetXaxis()->SetLimits(0.01,0.06);
+     //dt->GetYaxis()->SetRangeUser(0,100);
+     //dt->SetMarkerSize(1);
+     //dt->SetMarkerStyle(20);
+     dt->Draw("AP");
+     fpeak->Draw("SAME");
+     fpeak->SetLineColor(2);
+     c->SaveAs("time_resolution.pdf");
+     delete fpeak;
 
+/*     
+     TH1F *dtx = data->Draw("deltat");
+     TF1* fpeakx = new TF1("fpeakx","gaus", 0.019 , 0.041);
+     //fpeak->SetParameter(1,tmp);
+     dtx->Fit("fpeakx","","", 0.019 , 0.041);
+     TCanvas* cx = new TCanvas("cxanvas","cxanvas",800,400) ;
+     //time_resolution = fpeak->GetParameter(2);
+     dtx->GetXaxis()->SetLimits(0.01,0.06);
+     dtx->GetYaxis()->SetRangeUser(0,100);
+     dtx->SetMarkerSize(1);
+     dtx->SetMarkerStyle(20);
+     dtx->Draw("AP");
+     fpeakx->Draw("SAME");
+     fpeakx->SetLineColor(2);
+     cx->SaveAs("timex_resolution.pdf");
+     delete fpeakx;
+*/
+/*     
+     TCanvas* cx = new TCanvas("cxanvas","cxanvas",800,400) ;
+     RooRealVar x("deltat","delta_t",0.,0.06);
+     TTree *h_data = (TTree*)f->Get("data");
+     RooDataSet hdata("data","dataset",h_data,x);
+     RooRealVar mean("mean","mean",0.032,0.02,0.04);
+     RooRealVar sigma("sigma","sigma",0.005,0.,0.01);
+     RooGaussian gauss("gaus","guassian",x,mean,sigma);
+     RooPlot* xframe = x.frame();
+     gauss.fitTo(hdata,RooFit::Range(0.019,0.041));
+     gauss.plotOn(xframe);
+     gauss.paramOn(xframe);
+     //xframe->GetXaxis()->SetTitle("deltat");
+     //xframe->GetYaxis()->SetTitle("counts");
+     xframe->Draw();
+     xframe->Write();
+     cx->Write();
+     cx->SaveAs("RooFit: time resolution");
+*/     
+
+     std::cout <<  " time resolution  =  " << time_resolution  << std::endl;
 	
   //event2
 /*

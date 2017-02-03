@@ -21,7 +21,7 @@
 //LOCAL INCLUDES
 #include "Aux.hh"
 
-int main(char **argv)
+int main(int argc, char **argv)
 {
 
 

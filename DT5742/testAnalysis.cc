@@ -207,66 +207,26 @@ int main(int argc, char **argv)
 
 	  if(deltat!=0) dt->Fill(deltat);
 	  if(deltat!=0) tree->Fill();	
-	  //tree->Fill();	
 	  event++;
      }
     
-  //gStyle->SetOptStat(111111); 
   gStyle->SetOptFit();
   TF1* fpeak = new TF1("fpeak","gaus", 0.02 , 0.035);
-  //fpeak->SetParameter(1,0.025);
-  
-     TCanvas* c = new TCanvas("canvas","canvas",800,400) ;
-     time_resolution = fpeak->GetParameter(2);
-     //dt->GetXaxis()->SetLimits(0.01,0.06);
-     //dt->GetYaxis()->SetRangeUser(0,100);
-     //dt->SetMarkerSize(1);
-     //dt->SetMarkerStyle(20);
-     dt->Fit( fpeak,"","R");
-     dt->Draw();
-     //fpeak->Draw("SAME");
-     //fpeak->SetLineColor(2);
-     c->SaveAs("time_resolution.pdf");
-     delete fpeak;
+  //fpeak->SetParameter(1,0.025); 
+  TCanvas* c = new TCanvas("canvas","canvas",800,400) ;
+  //dt->GetXaxis()->SetLimits(0.01,0.06);
+  //dt->GetYaxis()->SetRangeUser(0,100);
+  //dt->SetMarkerSize(1);
+  //dt->SetMarkerStyle(20);
+  dt->Fit( fpeak,"","R");
+  time_resolution = fpeak->GetParameter(2);
+  dt->Draw();
+  //fpeak->Draw("SAME");
+  //fpeak->SetLineColor(2);
+  c->SaveAs("time_resolution.pdf");
+  delete fpeak;
 
-/*     
-     TH1F *dtx = data->Draw("deltat");
-     TF1* fpeakx = new TF1("fpeakx","gaus", 0.019 , 0.041);
-     //fpeak->SetParameter(1,tmp);
-     dtx->Fit("fpeakx","","", 0.019 , 0.041);
-     TCanvas* cx = new TCanvas("cxanvas","cxanvas",800,400) ;
-     //time_resolution = fpeak->GetParameter(2);
-     dtx->GetXaxis()->SetLimits(0.01,0.06);
-     dtx->GetYaxis()->SetRangeUser(0,100);
-     dtx->SetMarkerSize(1);
-     dtx->SetMarkerStyle(20);
-     dtx->Draw("AP");
-     fpeakx->Draw("SAME");
-     fpeakx->SetLineColor(2);
-     cx->SaveAs("timex_resolution.pdf");
-     delete fpeakx;
-*/
-/*     
-     TCanvas* cx = new TCanvas("cxanvas","cxanvas",800,400) ;
-     RooRealVar x("deltat","delta_t",0.,0.06);
-     TTree *h_data = (TTree*)f->Get("data");
-     RooDataSet hdata("data","dataset",h_data,x);
-     RooRealVar mean("mean","mean",0.032,0.02,0.04);
-     RooRealVar sigma("sigma","sigma",0.005,0.,0.01);
-     RooGaussian gauss("gaus","guassian",x,mean,sigma);
-     RooPlot* xframe = x.frame();
-     gauss.fitTo(hdata,RooFit::Range(0.019,0.041));
-     gauss.plotOn(xframe);
-     gauss.paramOn(xframe);
-     //xframe->GetXaxis()->SetTitle("deltat");
-     //xframe->GetYaxis()->SetTitle("counts");
-     xframe->Draw();
-     xframe->Write();
-     cx->Write();
-     cx->SaveAs("RooFit: time resolution");
-*/     
-
-     std::cout <<  " time resolution  =  " << time_resolution  << std::endl;
+  std::cout <<  " time resolution  =  " << time_resolution  << std::endl;
 	
   //event2
 /*

@@ -1,5 +1,5 @@
 #include "Aux.hh"
-
+#include <math.h>
 
 //*********************************************************
 // Get amplification factor used for the silicon sensor

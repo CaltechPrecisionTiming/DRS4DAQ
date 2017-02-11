@@ -1051,11 +1051,11 @@ int main(int argc, char *argv[])
     /* *************************************************************************************** */
     memset(&WDrun, 0, sizeof(WDrun));
     memset(&WDcfg, 0, sizeof(WDcfg));
-/*    if (argc > 1)
+    if (argc > 1)
         strcpy(ConfigFileName, argv[1]);
     else
         strcpy(ConfigFileName, DEFAULT_CONFIG_FILE);
-*/
+/*
     if (argc == 0)
         strcpy(ConfigFileName, DEFAULT_CONFIG_FILE);
     else
@@ -1065,7 +1065,7 @@ int main(int argc, char *argv[])
 	  else
          	strcpy(ConfigFileName, argv[1]);
 	}
-
+*/
     printf("Opening Configuration File %s\n", ConfigFileName);
     f_ini = fopen(ConfigFileName, "r");
     if (f_ini == NULL ) {
@@ -1335,6 +1335,8 @@ InterruptTimeout:
             Ne = 0;
             PrevRateTime = CurrentTime;
         }
+
+	if(Ne>1000) goto QuitProgram;
 
         /* Analyze data */
         for(i = 0; i < (int)NumEvents; i++) {

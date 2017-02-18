@@ -40,7 +40,12 @@ int main(int argc, char **argv)
   float* buffer;
   size_t result;
 
-  pFile = fopen ( "caltech_12_14_2016_v3.dat" , "rb" );
+  //pFile = fopen ( "caltech_12_14_2016_v3.dat" , "rb" );
+  //pFile = fopen ( "single_event_20170209.dat" , "rb" );
+  //pFile = fopen ( "multi_event_20170209.dat" , "rb" );
+  //pFile = fopen ( "falling_single_event_20170209.dat" , "rb" );
+  //pFile = fopen ( "falling_multi_event_20170209.dat" , "rb" );
+  pFile = fopen ( "wave_0.dat" , "rb" );
   if (pFile==NULL) {fputs ("File error\n",stderr); exit (1);}
 
   // obtain file size:
@@ -205,8 +210,10 @@ int main(int argc, char **argv)
 	  	std::cout <<  " base  =  " << base[8]  << std::endl;
 */
 
-	  if(deltat!=0) dt->Fill(deltat);
-	  if(deltat!=0) tree->Fill();	
+	  //if(deltat!=0) dt->Fill(deltat);
+	  //if(deltat!=0) tree->Fill();	
+	  dt->Fill(deltat);
+	  tree->Fill();	
 	  event++;
      }
     

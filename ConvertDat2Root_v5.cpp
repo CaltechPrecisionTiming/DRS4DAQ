@@ -57,6 +57,8 @@
 
 using namespace std;
 
+bool _debug = false;
+
 int main (int argc, char **argv)
 {
   
@@ -135,9 +137,8 @@ int main (int argc, char **argv)
 
   // create a new rootfile here
   TFile *treefile = new TFile ((char *) filename.c_str (), "recreate");
-  cout << ">> Creating rootfile " << filename << " ......" << endl;
-  cout << endl;
-
+  std::cout << ">> Creating rootfile " << filename << " ......\n" << std::endl;
+  
   // Save waveform of 1st 5 events
   TH1F *CH1event1 = new TH1F ("CH1event1", "CH1event1", 1024, 0, 1024);
   TH1F *CH1event2 = new TH1F ("CH1event2", "CH1event2", 1024, 0, 1024);
@@ -258,7 +259,7 @@ int main (int argc, char **argv)
   Event_t event;
 
   float t1[1024], t2[1024], t3[1024], t4[1024];
-  int j;
+  int j, tcell;
   float time1, time2, time3, time4, dt;
   
   float c1[1024];
@@ -278,7 +279,8 @@ int main (int argc, char **argv)
   tree->Branch ("amplitude", &amplitude, "ch1:ch2:ch3:ch4");
   tree->Branch ("mean", &mean, "ch1:ch2:ch3:ch4");
   tree->Branch ("RMS", &rms, "ch1:ch2:ch3:ch4");
-
+  tree->Branch ("tcell", &tcell, "tcell/I");
+  
   tree->Branch ("c1", c1, "c1[1024]/F");
   tree->Branch ("c2", c2, "c2[1024]/F");
   tree->Branch ("c3", c3, "c3[1024]/F");
@@ -310,17 +312,15 @@ int main (int argc, char **argv)
   float EventTime3[1024];
   float EventTime4[1024];
 	
-  cout << ">> Start reading file" << argv[1] << " ......" << endl;
-  cout << endl;
-
-
+  std::cout << ">> Start reading file" << argv[1] << " ......\n" << std::endl;
+  
   // Read additional headers introduced in v5 of DRS software
-  char tmpTimeHeader[5];
+  char tmpTimeHeader[6];
   file.read ((char *) &tmpTimeHeader, 4);
   cout << tmpTimeHeader << "\n";
   file.read ((char *) &tmpTimeHeader, 4);
   cout << tmpTimeHeader << "\n";
-  char tmpBoardSerialNumber[5];
+  char tmpBoardSerialNumber[6];
   file.read ((char *) &tmpBoardSerialNumber, 4);
 
   for ( int i = 0; i < nChannels; i++ )
@@ -338,29 +338,13 @@ int main (int argc, char **argv)
 	  return -1;
 	}
     }
-      /*
-	char tmpChannel2Header[5];
-	file.read ((char *) &tmpChannel2Header, 4);
-	cout << tmpChannel2Header << "\n";
-	file.read ((char *) &EventTime2, 4096);
-	
-	char tmpChannel3Header[5];
-	file.read ((char *) &tmpChannel3Header, 4);
-	cout << tmpChannel3Header << "\n";
-	file.read ((char *) &EventTime3, 4096);
-	
-	char tmpChannel4Header[5];
-	file.read ((char *) &tmpChannel4Header, 4);
-	cout << tmpChannel4Header << "\n";
-	file.read ((char *) &EventTime4, 4096);
-      */
 
   // Read event header
   file.read ((char *) &EventHeader, 4);
   EventHeader[4] = '\0';
   
-  cout << EventHeader << "\n";
-  cout << "\nSTART\n";
+  std::cout << EventHeader << std::endl;
+  std::cout << "\nSTART\n";
 
   while (!endoffile)
     {				// event loop
@@ -369,11 +353,11 @@ int main (int argc, char **argv)
       if (n % 1000 == 0)
 	{
 	  time (&realtime);
-	  cout << ">> Processing event No." << n << ", Time elapsed : " <<
+	  std::cout << ">> Processing event No." << n << ", Time elapsed : " <<
 	    (double) (clock () -
 		      start) /
 	    CLOCKS_PER_SEC << " secs, Current time : " << ctime (&realtime) <<
-	    endl;
+	    std::endl;
 	  //start = clock ();
 	}
 
@@ -410,50 +394,54 @@ int main (int argc, char **argv)
       file.read ((char *) &Second, 2);
       file.read ((char *) &Millisecond, 2);
       file.read ((char *) &Range, 2);
-      // cout << "Event date/time: Year: "<< Year
-      // 	   <<", Month: "<<Month
-      // 	   <<", Day: " <<Day
-      // 	   <<", Hour: "<< Hour
-      // 	   <<", Minute: "<< Minute
-      // 	   <<", Second: "<<Second
-      // 	   <<", Millisecond: "<<Millisecond
-      // 	   <<",Range: "<<Range
-      // 	   << "\n";
-
-//        int LastTime;
-//        int CurrentTime;
-//        int PassedTime;
-//        int RunTime;
-
+      if ( _debug )
+	{
+	  std::cout << "Event date/time: Year: "<< Year
+		    <<", Month: "<<Month
+		    <<", Day: " <<Day
+		    <<", Hour: "<< Hour
+		    <<", Minute: "<< Minute
+		    <<", Second: "<<Second
+		    <<", Millisecond: "<<Millisecond
+		    <<",Range: "<<Range
+		    << std::endl;
+	}
+      //        int LastTime;
+      //        int CurrentTime;
+      //        int PassedTime;
+      //        int RunTime;
+      
       // calculate time since last event in milliseconds
-//        LastTime = CurrentTime;
-//        CurrentTime =
-//          Date[3] * 3600000 + Date[4] * 60000 + Date[5] * 1000 + Date[6];
-
+      //        LastTime = CurrentTime;
+      //        CurrentTime =
+      //          Date[3] * 3600000 + Date[4] * 60000 + Date[5] * 1000 + Date[6];
+      
       // Read event times
       char tmpBoardNumber[5];
       file.read ((char *) &tmpBoardNumber, 2);
       short int tempB;
       file.read ((char *) &tempB, 2);
-      // cout << "Board serial number: "<<tmpBoardNumber<<" "<<tempB << "\n";
+      if ( _debug ) cout << "Board serial number: "<<tmpBoardNumber<<" "<<tempB << "\n";
 
       char tmpTriggerCell[5];
       file.read ((char *) &tmpTriggerCell, 2);
-      // cout << tmpTriggerCell << "\n";
-      short int  tmpT;
-      short int  triggerCellCh1 = 9999;
-      short int  triggerCellCh2 = 9999;
+      if ( _debug ) cout << tmpTriggerCell << "\n";
+      short int  tmpT;//real trigger cell;
       file.read ((char *) &tmpT, 2);
-      // cout << "Number of first readout cell "<<tmpT << "\n";
-      //cout << "Trigger Cell " << tmpTriggerCell << "\n";
+      if ( _debug ) std::cout << "Number of first readout cell "<<tmpT << std::endl;
+      if ( _debug ) std::cout << "Trigger Cell " << tmpTriggerCell << std::endl;
+      //--------------------------------------------
+      //Assign trigger cell to variable in the TTree
+      //--------------------------------------------
+      tcell = tmpT;
       
       while (loopchannel)	// loop all available channels. When reach end of event, will be stopped.
 	{
-
+	  
 	  // Read channel header
 	  file.read ((char *) &ChannelHeader, 4);
 	  ChannelHeader[4] = '\0';
-	  //cout << "Channel Header : " << ChannelHeader << endl;
+	  if ( _debug ) std::cout << "Channel Header : " << ChannelHeader << std::endl;
 
 	  if (strcmp (ChannelHeader, "EHDR") == 0)
 	    {
@@ -501,8 +489,6 @@ int main (int argc, char **argv)
 
 	  if (strcmp (ChannelHeader, "C001") == 0)
 	    {
-	      triggerCellCh1 = tmpT;
-	      
 	      for (int i = 0; i < 1024; i++)
 		{
 		  if (n == 1)
@@ -546,8 +532,6 @@ int main (int argc, char **argv)
 
 	  else if (strcmp (ChannelHeader, "C002") == 0)
 	    {
-	      triggerCellCh2 = tmpT;
-	      
 	      for (int i = 0; i < 1024; i++)
 		{
 		  if (n == 1)
@@ -681,15 +665,21 @@ int main (int argc, char **argv)
 		}
 	    }			// end of channel 4
 
+	  //----------------------------------------------------------------------
+	  // align cell #0 of all channels; this is the first sample in the scope;
+	  //this is the only time the signals have the same absolute time;
+	  //-----------------------------------------------------------------------
 	  
-	  // align cell #0 of all channels
-	  time1 = t1[(1024-triggerCellCh1) % 1024];
-
-	  //align channel #1 to #0
-	  time2 =  t2[(1024-triggerCellCh1) % 1024];
-	  dt = time1 - time2;
-            for (int i=0 ; i<1024 ; i++)
-	      t2[i] += dt;
+	  float time1_0 =  t1[(1024-tcell) % 1024];//get time of cell#0 for ch1
+	  float time2_0 =  t2[(1024-tcell) % 1024];//get time of cell#0 for ch1
+	  float time3_0 =  t3[(1024-tcell) % 1024];//get time of cell#0 for ch1
+	  float time4_0 =  t4[(1024-tcell) % 1024];//get time of cell#0 for ch1
+	  for (int i=0 ; i<1024 ; i++)
+	    {
+	      t2[i] -= (time2_0-time1_0);
+	      t3[i] -= (time3_0-time1_0);
+	      t4[i] -= (time4_0-time1_0);
+	    }
 	}			// end of channel loop
 
       tree->Fill ();		// fill the tree event by event 

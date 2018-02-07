@@ -315,17 +315,18 @@ int main (int argc, char **argv)
   std::cout << ">> Start reading file" << argv[1] << " ......\n" << std::endl;
   
   // Read additional headers introduced in v5 of DRS software
-  char tmpTimeHeader[6];
+  char tmpTimeHeader[1];
   file.read ((char *) &tmpTimeHeader, 4);
   cout << tmpTimeHeader << "\n";
   file.read ((char *) &tmpTimeHeader, 4);
   cout << tmpTimeHeader << "\n";
-  char tmpBoardSerialNumber[6];
+  char tmpBoardSerialNumber[5];
   file.read ((char *) &tmpBoardSerialNumber, 4);
 
+  cout << tmpBoardSerialNumber <<"\n";
   for ( int i = 0; i < nChannels; i++ )
     {
-      char tmpChannel1Header[5];
+      char tmpChannel1Header[1];
       file.read ((char *) &tmpChannel1Header, 4);
       cout << tmpChannel1Header << "\n";
       if ( strcmp( tmpChannel1Header,"C001" ) == 0 ) file.read ((char *) &EventTime1, 4096);
@@ -569,7 +570,7 @@ int main (int argc, char **argv)
                // calculate time for this cell
 		  for (j=0,t2[i]=0; j<i ; j++)
 		    t2[i] += EventTime2[(j+tmpT) % 1024];
-		  // t2[i] = i;
+		 // t2[i] = i;
 		  // std::cout<<"KKK "<<c1[i]<<" "<<ChannelDataVoltage[i]<<std::endl;
 		}
 	    }			// end of channel 2
@@ -613,7 +614,7 @@ int main (int argc, char **argv)
                // calculate time for this cell
 		  for (j=0,t3[i]=0; j<i ; j++)
 		    t3[i] += EventTime3[(j+tmpT) % 1024];
-		  // t3[i] = i;
+		 //t3[i] = i;
 		  // std::cout<<"KKK "<<c1[i]<<" "<<ChannelDataVoltage[i]<<std::endl;
 		}
 
@@ -660,7 +661,7 @@ int main (int argc, char **argv)
                // calculate time for this cell
 		  for (j=0,t4[i]=0; j<i ; j++)
 		    t4[i] += EventTime4[(j+tmpT) % 1024];
-		  // t4[i] = i;		 
+		 //t4[i] = i;		 
 		  // std::cout<<"KKK "<<c1[i]<<" "<<ChannelDataVoltage[i]<<std::endl;
 		}
 	    }			// end of channel 4

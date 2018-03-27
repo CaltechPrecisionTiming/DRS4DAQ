@@ -2,27 +2,6 @@
 #include <iomanip>
 #include <string>
 #include <iostream>
-#include <sstream>
-
-/*
-#include <TFile.h>
-#include <TTree.h>
-#include <TROOT.h>
-#include <TRandom.h>
-#include <TApplication.h>
-#include <TCanvas.h>
-#include <TPostScript.h>
-#include <TAxis.h>
-#include <TH1F.h>
-#include <TH2F.h>
-#include <TGraph.h>
-#include <TLegend.h>
-#include <TF1.h>
-#include <TStyle.h>
-#include <TProfile.h>
-
-#include <TMapFile.h>
-*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,8 +20,167 @@
 #include <vme/vme.h>
 #include <vme/vme_api.h>
 
-//LOCAL INCLUDES
-#include "include/Config.hh"
+
+
+
+//LORE
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <errno.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <fcntl.h>
+#include <ctype.h>
+
+#define THIS_IP            "192.168.133.50"   // the IP users will be connecting to
+#define COMMUNICATION_PORT "5000"             // the port on ZedBoard for communicating with XDAQ
+#define STREAMING_PORT     "5001"             // the port on ZedBoard for streaming to XDAQ
+//#define DESTINATION_IP     "192.168.133.1"    // the IP for the destination of the datastream (ftbftracker02)
+#define DESTINATION_IP     "192.168.133.46"    // the IP for the destination of the datastream (ftbf-daq-08)
+#define DESTINATION_PORT   47004              // the port for the destination of the datastream
+#define MAXBUFLEN 1492
+
+
+//========================================================================================================================
+// get sockaddr, IPv4 or IPv6:
+void *get_in_addr(struct sockaddr *sa)
+{
+  if (sa->sa_family == AF_INET) {
+    return &(((struct sockaddr_in*)sa)->sin_addr);
+  }
+
+  return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
+
+//========================================================================================================================
+int makeSocket(const char* ip, const char* port, struct addrinfo*& addressInfo)
+{
+  std::cout << __PRETTY_FUNCTION__ << "Opening socket. IP: " << ip << " port: " << port << std::endl;
+  int socketId = 0;
+  struct addrinfo hints, *servinfo, *p;
+  //int sendSockfd=0;
+  int rv;
+  //int numbytes;
+  //struct sockaddr_storage their_addr;
+  //char buff[MAXBUFLEN];
+  //socklen_t addr_len;
+  //char s[INET6_ADDRSTRLEN];
+
+  memset(&hints, 0, sizeof hints);
+  //    hints.ai_family   = AF_UNSPEC; // set to AF_INET to force IPv4
+  hints.ai_family   = AF_INET; // set to AF_INET to force IPv4
+  hints.ai_socktype = SOCK_DGRAM;
+  if(ip == NULL)
+    hints.ai_flags    = AI_PASSIVE; // use my IP
+
+  if ((rv = getaddrinfo(ip, port, &hints, &servinfo)) != 0) {
+    fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+    return 1;
+  }
+
+  // loop through all the results and bind to the first we can
+  for(p = servinfo; p != NULL; p = p->ai_next) {
+    if ((socketId = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+      perror("listener: socket");
+      continue;
+    }
+
+    if (bind(socketId, p->ai_addr, p->ai_addrlen) == -1) {
+      close(socketId);
+      perror("listener: bind");
+      continue;
+    }
+
+    break;
+  }
+
+  if (p == NULL) {
+    std::cout << "Can't open socket" << std::endl;
+    fprintf(stderr, "listener: failed to bind socket\n");
+    return 2;
+  }
+  freeaddrinfo(servinfo);
+  return socketId;
+}
+
+//========================================================================================================================
+struct sockaddr_in setupSocketAddress(const char* ip, unsigned int port)
+{
+  //std::cout << __PRETTY_FUNCTION__ << std::endl;
+  //network stuff
+  struct sockaddr_in socketAddress;
+  socketAddress.sin_family = AF_INET;// use IPv4 host byte order
+  socketAddress.sin_port   = htons(port);// short, network byte order
+
+  if(inet_aton(ip, &socketAddress.sin_addr) == 0)
+    {
+      std::cout << "FATAL: Invalid IP address " <<  ip << std::endl;
+      exit(0);
+    }
+
+  memset(&(socketAddress.sin_zero), '\0', 8);// zero the rest of the struct
+  return socketAddress;
+}
+
+//========================================================================================================================
+int send(int toSocket, struct sockaddr_in& toAddress, const std::string& buffer)
+{
+//   std::cout << "Socket Descriptor #: " << toSocket
+// 	    << " ip: " << std::hex << toAddress.sin_addr.s_addr << std::dec
+// 	    << " port: " << ntohs(toAddress.sin_port)
+// 	    << std::endl;
+  if (sendto(toSocket, buffer.c_str(), buffer.size(), 0, (struct sockaddr *)&(toAddress), sizeof(sockaddr_in)) < (int)(buffer.size()))
+    {
+      std::cout << "Error writing buffer" << std::endl;
+      return -1;
+    }
+  return 0;
+}
+
+//========================================================================================================================
+int receiveAndAcknowledge(int fromSocket, struct sockaddr_in& fromAddress, std::string& buffer)
+{
+  struct timeval tv;
+  tv.tv_sec = 0;
+  tv.tv_usec = 10; //set timeout period for select()
+  fd_set fileDescriptor;  //setup set for select()
+  FD_ZERO(&fileDescriptor);
+  FD_SET(fromSocket,&fileDescriptor);
+  select(fromSocket+1, &fileDescriptor, 0, 0, &tv);
+
+  if(FD_ISSET(fromSocket,&fileDescriptor))
+    {
+      std::string bufferS;
+      //struct sockaddr_in fromAddress;
+      socklen_t addressLength = sizeof(fromAddress);
+      int nOfBytes;
+      buffer.resize(MAXBUFLEN);
+      if ((nOfBytes=recvfrom(fromSocket, &buffer[0], MAXBUFLEN, 0, (struct sockaddr *)&fromAddress, &addressLength)) == -1)
+	return -1;
+
+      // Confirm you've received the message by returning message to sender
+      send(fromSocket, fromAddress, buffer);
+      buffer.resize(nOfBytes);
+      //char address[INET_ADDRSTRLEN];
+      //inet_ntop(AF_INET, &(fromAddress.sin_addr), address, INET_ADDRSTRLEN);
+      //unsigned long  fromIPAddress = fromAddress.sin_addr.s_addr;
+      //unsigned short fromPort      = fromAddress.sin_port;
+
+    }
+  else
+    return -1;
+
+  return 0;
+}
+
+//END LORE
+
+
+
+
+
 
 struct commandLineParameters {
   int      status;
@@ -60,7 +198,6 @@ struct commandLineParameters {
   int      postTriggerDelay;   // n
   int      bufferLimit;        // 1|0
   int      siftData;           // 1|0 
-  char*    inputConfig;        // name of config file to set indiv. channel offsets
 };
 
 struct vmeBusHandles {
@@ -75,36 +212,27 @@ struct vmeBusHandles {
    as an array of integers.  The addresses here are in terms of 32 bit words.
 */
 enum v1742Regs {
-  V1742_Group_Status = 0x0422, // 0x1088,
+  V1742_Group_Status           = 0x0422, // 0x1088,
   V1742_Group_Buffer_Occupancy = 0x0425, // 0x1094,
-  V1742_TR0_Threshold = 0x0435, // 0x10D4,
-  V1742_TR0_DC_Offset = 0x0437, // 0x10DC,
-  V1742_TR1_Threshold = 0x04B5, // 0x12D4,
-  V1742_TR1_DC_Offset = 0x04B7, // 0x12DC,
-  
-  //BBT: 03-26-18
-  V1742_GRP0_CH_DC_Offset = 0x0426, //0x1098,
-  V1742_GRP1_CH_DC_Offset = 0x0466, //0x1198,
-  V1742_GRP2_CH_DC_Offset = 0x04A6, //0x1298,
-  V1742_GRP3_CH_DC_Offset = 0x04E6, //0x1398,
-  // ===============
-  
-  V1742_Group_Config = 0x2000, // 0x8000,
-  V1742_Group_Config_Set = 0x2001, // 0x8004,
-  V1742_Group_Config_Clear = 0x2002, // 0x8008,
-  V1742_Custom_Size = 0x2008, // 0x8020,
-  V1742_Sampling_Frequency = 0x2036, // 0x80D8,
-  V1742_Acquisition_Mode = 0x2040, // 0x8100,
-  V1742_Software_Trigger = 0x2042, // 0x8108,
-  V1742_Trigger_Enable = 0x2043, // 0x810C,
-  V1742_Trigger_Out_Enable = 0x2044, // 0x8110,
-  V1742_Post_Trigger_Delay = 0x2045, // 0x8114
-  V1742_Group_Enable = 0x2048, // 0x8120,
-  V1742_Event_Stored = 0x204B, // 0x812C,
-  V1742_Event_Size = 0x2053, // 0x814C,
-  V1742_Clear_Data = 0x3BCA, // 0xEF28,
-  V1742_Config_Reload = 0x3BCD, // 0xEF34,
-
+  V1742_TR0_Threshold          = 0x0435, // 0x10D4,
+  V1742_TR0_DC_Offset          = 0x0437, // 0x10DC,
+  V1742_TR1_Threshold          = 0x04B5, // 0x12D4,
+  V1742_TR1_DC_Offset          = 0x04B7, // 0x12DC,
+  V1742_Group_Config           = 0x2000, // 0x8000,
+  V1742_Group_Config_Set       = 0x2001, // 0x8004,
+  V1742_Group_Config_Clear     = 0x2002, // 0x8008,
+  V1742_Custom_Size            = 0x2008, // 0x8020,
+  V1742_Sampling_Frequency     = 0x2036, // 0x80D8,
+  V1742_Acquisition_Mode       = 0x2040, // 0x8100,
+  V1742_Software_Trigger       = 0x2042, // 0x8108,
+  V1742_Trigger_Enable         = 0x2043, // 0x810C,
+  V1742_Trigger_Out_Enable     = 0x2044, // 0x8110,
+  V1742_Post_Trigger_Delay     = 0x2045, // 0x8114
+  V1742_Group_Enable           = 0x2048, // 0x8120,
+  V1742_Event_Stored           = 0x204B, // 0x812C,
+  V1742_Event_Size             = 0x2053, // 0x814C,
+  V1742_Clear_Data             = 0x3BCA, // 0xEF28,
+  V1742_Config_Reload          = 0x3BCD, // 0xEF34,
 };
 
 enum PARSER_STATE {
@@ -398,6 +526,7 @@ int splitData(char *eventDataFileName)
   return 0;
 }
 
+
 int displayStatus(unsigned int *mappedMemory)
 {
   unsigned int groupStatus; // 0x1088, 0x1188, 0x1288, 0x1388
@@ -476,6 +605,7 @@ int displayStatus(unsigned int *mappedMemory)
   return 0;
 }
 
+
 int setReg(unsigned int *mappedMemory, unsigned int addr, unsigned int value)
 {
   mappedMemory[addr] = value;
@@ -496,112 +626,7 @@ int setReg(unsigned int *mappedMemory, unsigned int addr, unsigned int value)
   return 0;
 }
 
-// BBT: 03-26-18
-void setChannelOffsetsFromConfig(unsigned int *mappedMemory, const char* inputConfig){
-  
-  std::ifstream in(inputConfig);
-  std::string line;
-  unsigned int offset;
-  int channel, group, ch, c;
-
-  // check to make sure file exists
-  if(!in){
-    printf("Cannot open config file: %s! Using VME defaults... probably bad\n", inputConfig);
-    return;
-  }
-
-  // file exists, let's get cracking
-  while( std::getline(in, line) ) {
-    if ( line.find("|") == std::string::npos ) {// ignore header
-      std::string readline[7];
-      c = 0;
-      ch = group = channel = -1;
-      offset = 99999;
-      // parse string into array, split by ' '
-      std::stringstream ssin(line);
-      while( ssin.good() && c < 7 ) {
-	ssin >> readline[c];
-	c++;
-      }
-      // get channel, group, and offset values as ints
-      if ( readline[0]!=""){
-	std::istringstream( readline[0] ) >> ch;
-	channel = ch % 9;
-	group = ch / 9;
-      }
-      if ( readline[6]!="")
-	std::istringstream( readline[6] ) >> offset;
-      
-      // skip trigger channels and channels with no offset given --> these channels take on VME default of 33086
-      if ( offset == 99999 || channel == 8) continue;
-
-      printf("Configuring: Ch = %i, Group = %i, Channel = %i, Offset = %i\n", ch, group, channel, offset);
-
-      // this next part involves turning offset into hex, adding channel, and turning back into int. it's ugly and should definitely be improved
-      char c_hex[10];
-      std::string s_hex;
-      unsigned int u_hex = 0; 
-      std::stringstream ss;
-
-      std::sprintf( c_hex, "%x", offset );
-      s_hex = c_hex; // store as string so inserting channel # easier
-      // add leading zeroes if hex code less than four characters
-      while (s_hex.length() < 4)
-	s_hex.insert(0, "0");
-      // add channel
-      ss << channel;
-      s_hex.insert(0, ss.str());
-      sscanf( s_hex.c_str(), "%x", &u_hex );
-      //std::cout << "Hex value: 0x" << s_hex << " , uint = " << u_hex << std::endl;
-      
-      unsigned int addr = 0;
-      if (group == 0) addr = V1742_GRP0_CH_DC_Offset; // GRP0, Channels [0,7]
-      if (group == 1) addr = V1742_GRP1_CH_DC_Offset; // GRP1, Channels [9,16]
-      if (group == 2) addr = V1742_GRP2_CH_DC_Offset; // GRP2, Channels [17,25]
-      if (group == 3) addr = V1742_GRP3_CH_DC_Offset; // GRP3, Channels [27,34]
-      
-      // FINALLY SET GRn_CH_DC_OFFSET
-      setReg(mappedMemory, addr, u_hex);
-      sleep(1); // sleep so enough time between writing registers
-
-    } // if statement skipping config header
-  } // close loop over lines in config file
-  
-}
-
-void dumpRegisters(struct vmeBusHandles *busHandles, unsigned int *mappedMemory, const char* label="")
-{
-  // BBT: 3-25-18
-  printf("============ %s =============\n", label);
-  
-  unsigned int groupStatus;   // 0x1088, 0x1188, 0x1288, 0x1388
-  unsigned int temperature;   // 0x10A0, 0x11A0, 0x12A0, 0x13A0
-  unsigned int grpChDcOffset; // 0x1n98 for n=0,1,2,3
-  unsigned int TR_dcOffset;   // 0x10DC (i=0,1), 0x12D4 (i=2,3)
-  unsigned int TR_threshold;  // 0x10D4 (i=0,1), 0x12DC (i=2,3)
-  unsigned int groupStatus_w; // second bit of 0x1n88 --> clue about writing
-  for (int i = 0; i < 4; i++) {
-    groupStatus   = mappedMemory[(0x1088 | (i << 8)) / 4];
-    groupStatus_w = ( (groupStatus) & (1 << 2) );
-    temperature   = mappedMemory[(0x10A0 | (i << 8)) / 4];
-    TR_dcOffset  = mappedMemory[(0x10DC | (i << 8)) / 4];
-    TR_threshold  = mappedMemory[(0x10D4 | (i << 8)) / 4];
-    // first set channel 0 before reading channel DC offset --> unnecessary i think
-    //setReg(busHandles->mappedMemory, ((0x10A4 | (i << 8)) / 4), 0x0);
-    grpChDcOffset = mappedMemory[(0x1098 | (i << 8)) / 4];
-    printf("[grpChDcOffset] Group %d , CH0, (%d):\n", i, grpChDcOffset);
-    //if(i<3){
-    //printf("[TEMP] Group %d (%dC):\n", i, temperature);
-    //printf("[G-Status] Group %d (%d):\n", i, groupStatus);
-    //printf("[G-Status Write] Group %d (%d):\n", i, groupStatus_w );
-    //printf("[TR dcOffset] Group %d (%d):\n", i, TR_dcOffset);
-    //printf("[TR threshold] Group %d (%d):\n", i, TR_threshold);
-    //}  
-  }
-}
-
-void readOutData(struct vmeBusHandles *busHandles,
-		 struct commandLineParameters params)
+void readOutData(struct vmeBusHandles *busHandles, struct commandLineParameters params)
 {
   FILE *fileHandle;
   char fileName[100];
@@ -632,8 +657,9 @@ void readOutData(struct vmeBusHandles *busHandles,
 
 
     eventsStored = busHandles->mappedMemory[V1742_Event_Stored];
-    eventSize = busHandles->mappedMemory[V1742_Event_Size];
+    eventSize    = busHandles->mappedMemory[V1742_Event_Size];
 
+    //Here polling the register to see if there was a trigger!!!
     while (eventSize == 0) {
       if (acqStopped) {
 	printf("Buffers empty, starting acquisition...\n");
@@ -642,11 +668,12 @@ void readOutData(struct vmeBusHandles *busHandles,
       }
 
       eventSize = busHandles->mappedMemory[V1742_Event_Stored];
-      usleep(10000);
+      if(eventSize == 0) usleep(100);
+      //else std::cout << "ev size: " << eventSize << " acq stopped? " << acqStopped << std::endl;
     }
 
-        
     if (params.bufferLimit == 1) {
+      std::cout << "I NEVER GET INSIDE HERE BECAUSE bufferLimits is not set : )->Buffer limits: " << params.bufferLimit << std::endl;
       if (busHandles->mappedMemory[V1742_Group_Status] & 0x1 && acqStopped == 0) {
 	printf("Buffers full, stopping acquisition...\n");
 	acqStopped = 1;
@@ -660,6 +687,7 @@ void readOutData(struct vmeBusHandles *busHandles,
     }
 
     eventSize = busHandles->mappedMemory[V1742_Event_Size];
+    //std::cout << "Ev size: " << eventSize << std::endl;
     if (eventCount % 50 == 0)
       printf("Read out triggered: event %d, %d bytes.\n", eventCount, eventSize * 4);
 
@@ -667,15 +695,16 @@ void readOutData(struct vmeBusHandles *busHandles,
 
     while (eventSize > 0) {
 
+      std::cout << "Ev size: " << eventSize << std::endl;
       if(eventSize > 1023){
-	readResult = vme_dma_read(busHandles->busHandle, busHandles->dmaHandle,
-				  0, 0x10000000, VME_A32UD, 0xFFC, 0);
+	readResult = vme_dma_read(busHandles->busHandle, busHandles->dmaHandle, 0, 0x10000000, VME_A32UD, 0xFFC, 0);
 	fwrite(busHandles->dmaBufferMemory, sizeof(unsigned int), 1023, fileHandle);
 	if (params.siftData) {
 	  siftData(1023, busHandles->dmaBufferMemory);
 	}
 	eventSize -= 1023;
-      } else {
+      } 
+      else {
 	eventData = busHandles->mappedMemory[0];
 	fwrite(&eventData, sizeof(unsigned int), 1, fileHandle);
 	if (params.siftData) {
@@ -826,7 +855,7 @@ struct commandLineParameters parseCommandLine(int argc, char **argv)
   params.triggerRisingEdge = 0;
   params.postTriggerDelay = -1;
   params.siftData = 0;
-  params.inputConfig = "config/December2017_UVA.config";
+
   if(argc == 1) {
     printUsage();
     exit(0);
@@ -955,17 +984,6 @@ struct commandLineParameters parseCommandLine(int argc, char **argv)
       sscanf(argv[i + 1], "%d", &params.runNumber);
       i += 1;
     } 
-    else if(strcmp("--inputConfig", argv[i]) == 0){
-      if(i + 1 >= argc) { // BBT- this does not print
-	printf("Using default config file. Specify config with the --inputConfig parameter.\n");
-      }
-      else
-	params.inputConfig = argv[i + 1];
-     
-      printf("input config: %s\n", params.inputConfig);
-      i += 1;
-    } // end input config
-
     else{
       printf("Unknown parameter: %s\n", argv[i]);
       printUsage();
@@ -974,14 +992,15 @@ struct commandLineParameters parseCommandLine(int argc, char **argv)
   }
 
 
-  if(params.run == 0)
-    return params;
+  //LORE FINAL CHECKS THAT I DON'T CARE ABOUT!
+//   if(params.run == 0)
+//     return params;
   
 
-  if(params.datasetName == NULL){
-    printf("You must specify a dataset name on the command line.\n");
-    exit(-1);
-  }
+//   if(params.datasetName == NULL){
+//     printf("You must specify a dataset name on the command line.\n");
+//     exit(-1);
+//   }
 
   
   // if(stat("/mnt/data/vmedigi", &st) != 0)
@@ -1011,7 +1030,7 @@ struct commandLineParameters parseCommandLine(int argc, char **argv)
     fprintf(nameHandle, "%d", params.runNumber);
     fclose(nameHandle);
   }
-
+  
   return params;
 }
 
@@ -1026,15 +1045,14 @@ void configureDigitizer(struct commandLineParameters params,
      There doesn't seem to be a good way to tell when the board has come
      up so we'll sleep and hope that's enough.
   */
-
-  //dumpRegisters(busHandles, busHandles->mappedMemory); 
-  printf("Reseting Digitizer...\n");
+  printf("Resetting Digitizer...\n");
   setReg(busHandles->mappedMemory, V1742_Config_Reload, 0x0001);
   sleep(1);
   setReg(busHandles->mappedMemory, V1742_Clear_Data, 0x0001);
   sleep(1);
- 
+
   printf("Configuring Digitizer...\n");
+
   /* Explicitly stop data acquisition. */
   setReg(busHandles->mappedMemory, V1742_Acquisition_Mode, 0x0008);
 
@@ -1046,18 +1064,16 @@ void configureDigitizer(struct commandLineParameters params,
   /* Configure the DACs that bias the TR0 and TR1 signals.  This is currently
      setup for NIM logic levels.
   */
-  //Hex: 32768 = 8000, 20934 = 51C6, 15000 == 3A98, 10000 == 2710, 5000 == 1388, 1000 == 03E8
-
-  // BBT: 03-26-18
-  //dumpRegisters(busHandles, busHandles->mappedMemory, "before config");
-  printf("\n=== Parsing configuration file %s ===\n", params.inputConfig);
-  setChannelOffsetsFromConfig(busHandles->mappedMemory, params.inputConfig);
-  //dumpRegisters(busHandles, busHandles->mappedMemory, "after config");
-
   setReg(busHandles->mappedMemory, V1742_TR0_DC_Offset, 0x8000);
   setReg(busHandles->mappedMemory, V1742_TR0_Threshold, 0x51C6);
-  setReg(busHandles->mappedMemory, V1742_TR1_DC_Offset, 0x8000); 
+  setReg(busHandles->mappedMemory, V1742_TR1_DC_Offset, 0x8000);
   setReg(busHandles->mappedMemory, V1742_TR1_Threshold, 0x51C6);
+  
+  //Si's changed values
+  //setReg(busHandles->mappedMemory, V1742_TR0_DC_Offset, 0x8000);
+  //setReg(busHandles->mappedMemory, V1742_TR0_Threshold, 0xFFFF);
+  //setReg(busHandles->mappedMemory, V1742_TR1_DC_Offset, 0x9088);
+  //setReg(busHandles->mappedMemory, V1742_TR1_Threshold, 0x51C6);
   
   /* Parameters which can be altered on the command line. */
   setReg(busHandles->mappedMemory, V1742_Group_Config, 0x30001110);
@@ -1127,26 +1143,136 @@ void triggerDigitizer(struct vmeBusHandles *busHandles)
 int 
 main(int argc, char **argv){
 
+  std::cout << "Running digitizer!" << std::endl;
+  //LORE
+  /////////////////////
+  // Bind UDP socket //
+  /////////////////////
+      
+  //sendSockfd = makeSocket(string("localhost").c_str(),myport,p);
+
+  //struct addrinfo hints, *servinfo;
+  struct addrinfo* p;
+
+  int communicationSocket              = makeSocket(THIS_IP,COMMUNICATION_PORT,p);
+  int streamingSocket                  = makeSocket(THIS_IP,STREAMING_PORT,p);
+  struct sockaddr_in streamingReceiver = setupSocketAddress(DESTINATION_IP, DESTINATION_PORT);
+  struct sockaddr_in messageSender;
+
+  std::string communicationBuffer;
+  //unsigned int data_buffer[32];
+  //END LORE
+
   struct commandLineParameters params;
   struct vmeBusHandles busHandles;
 
   params = parseCommandLine(argc, argv);
 
-  if( params.eventDataFileName != NULL){
-    splitData(params.eventDataFileName);
-    return 0;
-  }
 
   setupVME(&busHandles);
 
-  if(params.status)
-    displayStatus(busHandles.mappedMemory);
-  
-  if(params.run){
-    configureDigitizer(params, &busHandles);
-    readOutData(&busHandles, params);
+  bool writeFile = false;
+
+  //LORE
+  unsigned int memory[782];
+  FILE* fileHandle = 0;
+  std::string fileName;
+  unsigned int eventSize     = 0;
+  unsigned int eventCount    = 0;
+  unsigned int eventsStored  = 0;
+  unsigned int dataCounter   = 0;
+  std::string currentRun;
+  int readResult = 0;
+  bool running = false;
+
+  while(1){
+    communicationBuffer = "";
+    //std::cout << "looping" << std::endl;
+    if (receiveAndAcknowledge(communicationSocket, messageSender, communicationBuffer) >= 0){
+      std::cout << "Received: " << communicationBuffer << std::endl;
+
+      if (communicationBuffer.substr(0,5) == "START") {
+	currentRun = communicationBuffer.substr(6,communicationBuffer.length()-6);
+	running     = true;
+	eventCount  = 0;
+	dataCounter = 0;
+	if(writeFile){
+	  fileName = "Run_" + currentRun + ".dat";
+	  std::cout << "-" << fileName << "-" << std::endl;
+	  fileHandle = fopen(fileName.c_str(), "w");
+	}
+	configureDigitizer(params, &busHandles);
+// 	displayStatus(busHandles.mappedMemory);
+	std::cout << "Run " << currentRun << " started!" << std::endl;
+      } else if (communicationBuffer == "STOP") {
+	running = false;
+	if(writeFile) fclose(fileHandle);
+	dataCounter = 0;
+// 	std::cout << "Final count: " << dataCounter << std::endl;
+	std::cout << "Run " << currentRun << " stopped!" << std::endl;
+	std::cout << "Processed: " << eventCount << " triggers for Run " << currentRun << "!" << std::endl;
+      } else if (communicationBuffer == "PAUSE") {
+	running = false;
+      } else if (communicationBuffer == "RESUME") {
+	configureDigitizer(params, &busHandles);
+	running = true;
+      } else if (communicationBuffer == "CONFIGURE") {
+	configureDigitizer(params, &busHandles);
+	displayStatus(busHandles.mappedMemory);
+      } 
+    }
+      
+    if(running){
+      eventsStored = busHandles.mappedMemory[V1742_Event_Stored];
+      eventSize    = busHandles.mappedMemory[V1742_Event_Size];
+
+      //Here polling the register to see if there was a trigger!!!
+      eventSize = busHandles.mappedMemory[V1742_Event_Stored];//WEIRD SHOULD BE eventSIZE!!!!
+      if(eventSize == 0) continue;
+      eventSize = busHandles.mappedMemory[V1742_Event_Size];
+      //std::cout << "Ev size: " << eventSize << std::endl;
+
+      ++eventCount;
+//       if (eventCount == 500)
+// 	running = false;
+//       if (eventCount % 50 == 0){
+      std::cout << "Event #: " << std::hex << "0x" << eventCount << " -> dec: " << std::dec << eventCount << std::endl;
+//       }
+
+     
+      while (eventSize > 0) {
+// 	std::cout << "Ev size: " << eventSize << std::endl;
+	
+	if(eventSize > 1023){
+	  readResult = vme_dma_read(busHandles.busHandle, busHandles.dmaHandle, 0, 0x10000000, VME_A32UD, 0xFFC, 0);
+	  if(writeFile) fwrite(busHandles.dmaBufferMemory, sizeof(unsigned int), 1023, fileHandle);
+	  sendto(streamingSocket, busHandles.dmaBufferMemory, sizeof(unsigned int)*1023, 0, (struct sockaddr *)&streamingReceiver, sizeof(streamingReceiver));
+// 	  for(unsigned int i=0; i<1023; i++)
+// 	    std::cout << dataCounter++ << ") " << 1023*4 << "->" << std::hex << busHandles.dmaBufferMemory[1] << std::dec << std::endl;
+// 	  std::cout << 4092 << " -> " << std::hex << busHandles.dmaBufferMemory[0] << std::dec << std::endl;
+ 	  eventSize -= 1023;
+ 	} 
+ 	else {
+	  for(int i=0; i<782; i++){
+	    memory[i] = busHandles.mappedMemory[0];
+	    eventSize--;
+	  }
+  	  if(writeFile) fwrite(memory, sizeof(unsigned int), 782, fileHandle);
+  	  sendto(streamingSocket, memory, sizeof(unsigned int)*782, 0, (struct sockaddr *)&streamingReceiver, sizeof(streamingReceiver));
+//  	  std::cout << dataCounter++ << ") " << 4 << "->" << std::hex << eventData << std::dec << std::endl;
+ 	}
+      }
+    }
+    //usleep(1);
   }
 
+  // Clean up and exit
+  close(communicationSocket);
+  close(streamingSocket);
+  //LORE
+
+
+  std::cout << "SW TRIG: " << params.softwareTrigger << std::endl;
   if(params.softwareTrigger)
     triggerDigitizer(&busHandles);
     

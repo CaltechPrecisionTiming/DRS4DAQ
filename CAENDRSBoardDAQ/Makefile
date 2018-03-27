@@ -1,4 +1,3 @@
-
 CC            = gcc
 CXX           = g++
 LD            = g++
@@ -20,26 +19,30 @@ GLIBS         = $(ROOTGLIBS) $(SYSLIBS)
 #------------------------------------------------------------------------------
 
 pro           = caen-01
+pro1          = CMSTiming
 
-OBJS          = $(pro).o
+OBJS          = $(pro).o $(pro1).o
 
 #------------------------------------------------------------------------------
 
 
 KERNELREV:=$(shell uname -r)
 
-INCLUDES_C =   /usr/include/vme /lib/modules/$(KERNELREV)/build/include
+INCLUDES_C =   /usr/include/vme /lib/modules/$(KERNELREV)/build/include /include
 
 LIBS2  = -Llib -lvme
 
 
 #------------------------------------------------------------------------------
 
-all:            $(pro)
+all: $(pro) $(pro1)
 
 
-$(pro):       $(OBJS)
-	$(LD)  $(OBJS) $(LIBS) $(GLIBS) $(LIBS2) -o $(pro)
+$(pro): $(pro).o
+	$(LD)  $(<) $(LIBS) $(GLIBS) $(LIBS2) -o $(pro)
+
+$(pro1): $(pro1).o 
+	$(LD)  $(<) $(LIBS) $(GLIBS) $(LIBS2) -o $(pro1)
 
 
 
@@ -55,5 +58,3 @@ clean:
 
 %.o:%.c
 	$(CC) $(CXXFLAGS) $(INCLUDES_C:%=-I%) -c $<
-
-

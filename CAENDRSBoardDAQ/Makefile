@@ -20,22 +20,23 @@ GLIBS         = $(ROOTGLIBS) $(SYSLIBS)
 
 pro           = caen-01
 pro1          = CMSTiming
+pro2          = CMSTiming3
 
-OBJS          = $(pro).o $(pro1).o
+OBJS          = $(pro).o $(pro1).o $(pro2).o
 
 #------------------------------------------------------------------------------
 
 
 KERNELREV:=$(shell uname -r)
 
-INCLUDES_C =   /usr/include/vme /lib/modules/$(KERNELREV)/build/include /include
+INCLUDES_C =   /usr/include/vme /lib/modules/$(KERNELREV)/build/include
 
 LIBS2  = -Llib -lvme
 
 
 #------------------------------------------------------------------------------
 
-all: $(pro) $(pro1)
+all: $(pro) $(pro1) $(pro2)
 
 
 $(pro): $(pro).o
@@ -44,6 +45,8 @@ $(pro): $(pro).o
 $(pro1): $(pro1).o 
 	$(LD)  $(<) $(LIBS) $(GLIBS) $(LIBS2) -o $(pro1)
 
+$(pro2): $(pro2).o 
+	$(LD)  $(<) $(LIBS) $(GLIBS) $(LIBS2) -o $(pro2)
 
 
 clean:

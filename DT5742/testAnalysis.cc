@@ -26,7 +26,7 @@ int main(int argc, char **argv)
 
 
   bool drawDebugPulses = false;
-  drawDebugPulses = true;
+  //drawDebugPulses = true;
   /*  std::string _drawDebugPulses = ParseCommandLine( argv, "--debug" );
   bool drawDebugPulses = false;
   if ( _drawDebugPulses == "yes" ) {
@@ -45,7 +45,7 @@ int main(int argc, char **argv)
   //pFile = fopen ( "multi_event_20170209.dat" , "rb" );
   //pFile = fopen ( "falling_single_event_20170209.dat" , "rb" );
   //pFile = fopen ( "falling_multi_event_20170209.dat" , "rb" );
-  pFile = fopen ( "wave_0.dat" , "rb" );
+  pFile = fopen ( argv[1] , "rb" );
   if (pFile==NULL) {fputs ("File error\n",stderr); exit (1);}
 
   // obtain file size:
@@ -57,7 +57,7 @@ int main(int argc, char **argv)
   // allocate memory to contain the whole file:
   buffer = (float*) malloc (sizeof(float)*lSize);
   if (buffer == NULL) {fputs ("Memory error\n",stderr); exit (2);}
-  
+
   //define the ouput root file and tree
   TFile *f = new TFile("output.root","recreate");
   TTree *tree = new TTree("data","data");
@@ -69,6 +69,7 @@ int main(int argc, char **argv)
   float channel[18][1024];
   float channelCorrected[18][1024];
   float base[18];
+  float amp[18];
   int baseindex[18];
   float gauspeak[18];
   float linearTime0[18];
@@ -80,12 +81,13 @@ int main(int argc, char **argv)
   float time_resolution;
 
   tree->Branch("event", &event, "event/I");
-  tree->Branch("bin", bin, "bin[1024]/I");   
-  tree->Branch("raw", raw, "raw[18][1024]/F");   
+  tree->Branch("bin", bin, "bin[1024]/I");
+  tree->Branch("raw", raw, "raw[18][1024]/F");
   tree->Branch("channel", channel, "channel[18][1024]/F");
   tree->Branch("channelCorrected", channelCorrected, "channelCorrected[18][1024]/F");
   tree->Branch("time", time, "time[2][1024]/F");
   tree->Branch("base", base, "base[18]/F");
+  tree->Branch("amp", amp, "amp[18]/F");
   tree->Branch("baseindex", baseindex, "baseindex[18]/I");
   tree->Branch("gauspeak", gauspeak, "gauspeak[18]/F");
   tree->Branch("linearTime0", linearTime0, "linearTime0[18]/F");
@@ -117,52 +119,51 @@ int main(int argc, char **argv)
 	  double x;
 	  x = *(buffer+6);
  	for(int j = 0; j < 18; j++)
-	    { 
+	    {
 	  	for(int i = 0; i < 1024; i++ )
 			{
 		  		raw[j][i] = buffer[i+6+j*1024];
 		  		channel[j][i] = ( raw[j][i] - 2047. )/4096. ;//converting to volts [V]
-			  	//std::cout << "i = " << i << " ; j = " << j << " ; raw[j][i] = " << raw[j][i] << " ; channel[j][i] = " << channel[j][i] << std::endl; 
+			  	//std::cout << "i = " << i << " ; j = " << j << " ; raw[j][i] = " << raw[j][i] << " ; channel[j][i] = " << channel[j][i] << std::endl;
 				bin[i] = i;
 				time[0][i] = i*0.2;
 				time[1][i] = i*0.2;
 			}
 	    }
  	for(int j = 0; j < 18; j++)
-	    { 
-		//Find Peak Location
-        	int index_min = FindMin (1024, channel[j]); // return index of the min     
-	  	//if(j==0) std::cout << j <<  " index_min =  " << index_min  << std::endl;
-		baseindex[j] = index_min;
-        	//int index_minraw = FindMin (1024, raw[j]); // return index of the min     
-	  	//std::cout << j <<  " index_minraw =  " << index_minraw  << std::endl;
-		
-		//Estimate baseline
-        	float baseline = GetBaseline( index_min, channel[j]);
-	  	//std::cout << j <<  " baseline =  " << baseline  << std::endl;
-        	//float baselineraw = GetBaseline( index_minraw, raw[j]);
-	  	//std::cout << j <<  " baselineraw =  " << baselineraw  << std::endl;
-                base[j] = baseline;
-
-		//Correct pulse shape for baseline offset
-	  	for(int i = 0; i < 1024; i++ )
-		{
-			channelCorrected[j][i] = channel[j][i] - base[j];
-		}
-	
+	    {
+        //Find Peak Location
+        int index_min = FindMin (1024, channel[j]); // return index of the min
+        //if(j==0) std::cout << j <<  " index_min =  " << index_min  << std::endl;
+        baseindex[j] = index_min;
+        //int index_minraw = FindMin (1024, raw[j]); // return index of the min
+        //std::cout << j <<  " index_minraw =  " << index_minraw  << std::endl;
+        //Estimate baseline
+        float baseline = GetBaseline( index_min, channel[j]);
+        //std::cout << j <<  " baseline =  " << baseline  << std::endl;
+        //float baselineraw = GetBaseline( index_minraw, raw[j]);
+        //std::cout << j <<  " baselineraw =  " << baselineraw  << std::endl;
+        //base[j] = baseline;
+        base[j] = 0.0;
+        //Correct pulse shape for baseline offset
+        for(int i = 0; i < 1024; i++ )
+        {
+          channelCorrected[j][i] = channel[j][i] - base[j];
+        }
+        amp[j] = -channel[j][index_min];
 		//Make Pulse shape Graph
 		TString pulseName = Form("pulse_event%d_ch%d", event, j);
-		TGraphErrors* pulse = GetTGraph( channelCorrected[j], time[0] );	
-		//if(j<9) TGraphErrors* pulse = GetTGraph( channelCorrected[j], time[0] );	
-		//else TGraphErrors* pulse = GetTGraph( channelCorrected[j], time[1] );	
+		TGraphErrors* pulse = GetTGraph( channelCorrected[j], time[0] );
+		//if(j<9) TGraphErrors* pulse = GetTGraph( channelCorrected[j], time[0] );
+		//else TGraphErrors* pulse = GetTGraph( channelCorrected[j], time[1] );
 
-		//Gauss Time-Stamping 
-		double min = 0.; double low_edge =0.; double high_edge =0.; double y = 0.; 
-		pulse->GetPoint(index_min, min, y);	
+		//Gauss Time-Stamping
+		double min = 0.; double low_edge =0.; double high_edge =0.; double y = 0.;
+		pulse->GetPoint(index_min, min, y);
 		pulse->GetPoint(index_min-3, low_edge, y); // get the time of the low edge of the fit range
-		pulse->GetPoint(index_min+3, high_edge, y);  // get the time of the upper edge of the fit range	
+		pulse->GetPoint(index_min+3, high_edge, y);  // get the time of the upper edge of the fit range
 
-			
+
 		float timepeak = 0.;
 		float timecf0   = 0;
 		float timecf15   = 0;
@@ -194,7 +195,7 @@ int main(int argc, char **argv)
 		linearTime15[j] = timecf15;
 		linearTime30[j] = timecf30;
 		linearTime45[j] = timecf45;
-		linearTime60[j] = timecf60; 
+		linearTime60[j] = timecf60;
 	  	//if(j==0) std::cout <<  " timepeak  =  " << timepeak  << std::endl;
 
 	    }
@@ -211,30 +212,30 @@ int main(int argc, char **argv)
 */
 
 	  //if(deltat!=0) dt->Fill(deltat);
-	  //if(deltat!=0) tree->Fill();	
+	  //if(deltat!=0) tree->Fill();
 	  dt->Fill(deltat);
-	  tree->Fill();	
+	  tree->Fill();
 	  event++;
      }
-    
+
   gStyle->SetOptFit();
   TF1* fpeak = new TF1("fpeak","gaus", 0.02 , 0.035);
-  //fpeak->SetParameter(1,0.025); 
-  TCanvas* c = new TCanvas("canvas","canvas",800,400) ;
+  //fpeak->SetParameter(1,0.025);
+  //TCanvas* c = new TCanvas("canvas","canvas",800,400) ;
   //dt->GetXaxis()->SetLimits(0.01,0.06);
   //dt->GetYaxis()->SetRangeUser(0,100);
   //dt->SetMarkerSize(1);
   //dt->SetMarkerStyle(20);
   dt->Fit( fpeak,"","R");
   time_resolution = fpeak->GetParameter(2);
-  dt->Draw();
+  //dt->Draw();
   //fpeak->Draw("SAME");
   //fpeak->SetLineColor(2);
-  c->SaveAs("time_resolution.pdf");
+  //c->SaveAs("time_resolution.pdf");
   delete fpeak;
 
   std::cout <<  " time resolution  =  " << time_resolution  << std::endl;
-	
+
   //event2
 /*
   result = fread (buffer,1,lSize,pFile);
